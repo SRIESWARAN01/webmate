@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebMate - Ultimate Digital Solutions Hub</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+      color: #fff;
+      min-height: 100vh;
+      transition: background 0.5s ease;
+      perspective: 1000px;
+    }
+
+    .header {
+      background: rgba(0, 0, 0, 0.95);
+      padding: 1.5rem;
+      font-size: 2rem;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1.2rem;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .navbar a {
+      color: #fff;
+      text-decoration: none;
+      padding: 0.8rem 1.8rem;
+      border-radius: 30px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform: translateZ(0);
+    }
+
+    .navbar a:hover {
+      background: linear-gradient(45deg, #3498db, #2ecc71);
+      transform: translateZ(25px) scale(1.15);
+      box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .hero {
+      padding: 5rem 1rem;
+      font-size: 2.8rem;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+
+    .home-box {
+      background: rgba(0, 0, 0, 0.85);
+      padding: 2.5rem;
+      margin: 2.5rem auto;
+      width: 85%;
+      border-radius: 20px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+      transform-style: preserve-3d;
+      transition: transform 0.4s ease;
+    }
+
+    .home-box:hover {
+      transform: translateZ(15px) rotateX(3deg) rotateY(3deg);
+    }
+
+    .services {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2.5rem;
+      padding: 2rem;
+      perspective: 1500px;
+    }
+
+    .service-box {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 20px;
+      transition: all 0.4s ease;
+      transform-style: preserve-3d;
+      position: relative;
+      overflow: hidden;
+      min-height: 150px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .service-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      transform: rotate(45deg);
+      transition: 0.6s;
+    }
+
+    .service-box:hover::before {
+      animation: shine 1.5s;
+    }
+
+    .service-box:hover {
+      transform: translateZ(30px) scale(1.08);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    @keyframes shine {
+      0% {
+        left: -50%;
+      }
+      100% {
+        left: 150%;
+      }
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        font-size: 2rem;
+        padding: 3rem 1rem;
+      }
+
+      .home-box {
+        width: 95%;
+        padding: 1.8rem;
+      }
+
+      .navbar {
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">WebMate - Ultimate Digital Solutions Hub</div>
+
+  <div class="navbar">
+    <a href="#">Home</a>
+    <a href="#">About Us</a>
+    <a href="#">Services</a>
+    <a href="#">Contact</a>
+  </div>
+
+  <div class="hero">
+    <p>Transform Your Digital Experience</p>
+  </div>
+
+  <!-- Chatbot Section -->
+  <div class="home-box">
+    <h2>CHATBOT SOLUTIONS</h2>
+  </div>
+  <div class="services">
+    <a href="indian law chatbot.html" class="service-box">
+      <h3>Indian Law Chatbot</h3>
+    </a>
+    <a href="Netcenter Government Services Chatbot.html" class="service-box">
+      <h3>Government Services Chatbot</h3>
+    </a>
+  </div>
+
+  <!-- Calculator Section -->
+  <div class="home-box">
+    <h2>FINANCIAL CALCULATORS</h2>
+  </div>
+  <div class="services">
+    <a href="Basic Calculator.html" class="service-box">
+      <h3>Basic Calculator</h3>
+    </a>
+    <a href="Date Difference Calculator.html" class="service-box">
+      <h3>Date Calculator</h3>
+    </a>
+    <a href="SIP Calculator .html" class="service-box">
+      <h3>SIP Calculator</h3>
+    </a>
+    <a href="Income Tax Calculator.html" class="service-box">
+      <h3>Tax Calculator</h3>
+    </a>
+    <a href="GST Calculator.html" class="service-box">
+      <h3>GST Calculator</h3>
+    </a>
+  </div>
+
+  <!-- Career Guidance -->
+  <div class="home-box">
+    <h2>CAREER GUIDANCE</h2>
+  </div>
+  <div class="services">
+    <a href="Post-12th Career Guidance.html" class="service-box">
+      <h3>Post-12th Career Guidance</h3>
+    </a>
+  </div>
+
+  <!-- Calendar & Tools -->
+  <div class="home-box">
+    <h2>PRODUCTIVITY TOOLS</h2>
+  </div>
+  <div class="services">
+    <a href="Annual Calendar.html" class="service-box">
+      <h3>Annual Calendar</h3>
+    </a>
+    <a href="Browser .html" class="service-box">
+      <h3>Smart Browser</h3>
+    </a>
+    <a href="Video Player.HTML" class="service-box">
+      <h3>Video Player</h3>
+    </a>
+    <a href="Music Player.html" class="service-box">
+      <h3>Music Player</h3>
+    </a>
+  </div>
+
+
+  <!-- News Section -->
+  <div class="home-box">
+    <h2>news</h2>
+  </div>
+  <div class="services">
+    <a href="news.html" class="service-box">
+      <h3>news</h3>
+    </a>
+  </div>
+   <!-- News Section -->
+  <div class="home-box">
+    <h2>BILLS</h2>
+  </div>
+  <div class="services">
+    <a href="bills.html" class="service-box">
+      <h3>bills</h3>
+    </a>
+  </div>
+
+<!-- News Section -->
+  <div class="home-box">
+    <h2>id card</h2>
+  </div>
+  <div class="services">
+    <a href="id.html" class="service-box">
+      <h3>id card</h3>
+    </a>
+  </div>
+  
+    <!-- Business Section -->
+    <div class="home-box">
+      <h2>BUSINESS SOLUTIONS</h2>
+    </div>
+    <div class="services">
+      <a href="scheme in business.html" class="service-box">
+        <h3>scheme in business</h3>
+      </a>
+    </div>
+	
+    <!-- Business Section -->
+    <div class="home-box">
+      <h2>stock market</h2>
+    </div>
+    <div class="services">
+      <a href="stock market.html" class="service-box">
+        <h3>stock market</h3>
+      </a>
+    </div>
+  <script>
+    // Text-to-Speech Welcome Message
+    function speakWelcome() {
+      const synth = window.speechSynthesis;
+      const welcomeText = "Welcome to all in WebMate - Ultimate Digital Solutions Hub";
+      const utterance = new SpeechSynthesisUtterance(welcomeText);
+      // Set female voice if available
+      const voices = synth.getVoices();
+      const femaleVoice = voices.find(voice => voice.name.includes('Female'));
+      if (femaleVoice) {
+        utterance.voice = femaleVoice;
+      }
+      utterance.pitch = 1;
+      utterance.rate = 1;
+      synth.speak(utterance);
+    }
+
+    window.addEventListener('load', () => {
+      setTimeout(speakWelcome, 500);
+    });
+  </script>
+  
+  <script>
+    // Updated Dynamic Gradient Background with smoother transitions and more colors
+    let hue = 0;
+    function updateBackground() {
+      hue = (hue + 1) % 360;
+      document.body.style.background = `
+        linear-gradient(
+          45deg, 
+          hsl(${hue}, 75%, 30%),
+          hsl(${(hue + 120) % 360}, 75%, 40%),
+          hsl(${(hue + 240) % 360}, 75%, 50%)
+        )
+      `;
+      requestAnimationFrame(updateBackground);
+    }
+    updateBackground();
+
+    // Scroll Color Modulation (adjusts hue based on scroll position)
+    window.addEventListener('scroll', () => {
+      const scrollPos = window.pageYOffset;
+      const docHeight = document.body.scrollHeight;
+      const hueChange = (scrollPos / docHeight) * 720;
+      hue = hueChange % 360;
+    });
+
+    // Hover Sound Effect (optional)
+    const hoverSound = new Audio('hover-sound.mp3');
+    document.querySelectorAll('.service-box').forEach(box => {
+      box.addEventListener('mouseenter', () => {
+        hoverSound.currentTime = 0;
+        hoverSound.play();
+      });
+    });
+  </script>
+</body>
+</html>

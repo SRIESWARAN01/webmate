@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indian Law Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chatbot-container {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 400px;
+      padding: 20px;
+      position: relative;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    #chatbox {
+      height: 300px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      overflow-y: auto;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f9f9f9;
+    }
+
+    #userInput {
+      width: calc(100% - 120px);
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    #sendBtn {
+      width: 60px;
+      padding: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    #sendBtn:hover {
+      background-color: #0056b3;
+    }
+
+    #clearBtn {
+      width: 60px;
+      padding: 10px;
+      background-color: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    #clearBtn:hover {
+      background-color: #c82333;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 5px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .user {
+      background-color: #007bff;
+      color: #fff;
+      align-self: flex-end;
+    }
+
+    .bot {
+      background-color: #f1f1f1;
+      color: #333;
+      align-self: flex-start;
+    }
+
+    .suggestions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .suggestion {
+      background-color: #e9ecef;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .suggestion:hover {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="chatbot-container">
+    <h1>Indian Law Chatbot</h1>
+    <div id="chatbox">
+      <div id="chatlogs"></div>
+    </div>
+    <div class="suggestions" id="suggestions"></div>
+    <input type="text" id="userInput" placeholder="Ask a legal question (e.g., What is Section 302?)" />
+    <button id="sendBtn">Send</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <script>
+    // Sample dataset of 100+ legal questions and answers
+    const legalQA = {
+      // Indian Penal Code (IPC) Sections
+      "what is section 302": "Section 302 of the Indian Penal Code (IPC) deals with punishment for murder. The punishment for murder is life imprisonment or the death penalty.",
+      "what is section 420": "Section 420 of the IPC deals with cheating and dishonesty. The punishment can be imprisonment of up to 7 years and a fine.",
+      "what is section 376": "Section 376 of the IPC deals with punishment for rape. The punishment can range from rigorous imprisonment of at least 10 years to life imprisonment.",
+      "what is section 124a": "Section 124A of the IPC deals with sedition. It defines sedition as any act that brings or attempts to bring hatred or contempt towards the government.",
+      "what is section 498a": "Section 498A of the IPC deals with cruelty by a husband or his relatives towards a married woman. It is a non-bailable offense.",
+      "what is section 34": "Section 34 of the IPC deals with acts done by several persons in furtherance of common intention. All are liable for the act as if it were done by one person.",
+      "what is section 144": "Section 144 of the Code of Criminal Procedure (CrPC) empowers a district magistrate to issue orders in urgent cases of nuisance or apprehended danger.",
+      "what is section 406": "Section 406 of the IPC deals with punishment for criminal breach of trust. The punishment can be imprisonment of up to 3 years or a fine.",
+      "what is section 511": "Section 511 of the IPC deals with punishment for attempting to commit offenses. It prescribes punishment for attempts to commit crimes punishable with imprisonment.",
+      "what is section 307": "Section 307 of the IPC deals with attempt to murder. The punishment can be imprisonment of up to 10 years and a fine.",
+
+      // Basic Legal Questions
+      "what is the indian constitution": "The Indian Constitution is the supreme law of India. It lays down the framework defining fundamental political principles, establishes the structure, procedures, powers, and duties of government institutions, and sets out fundamental rights, directive principles, and the duties of citizens.",
+      "what are fundamental rights": "Fundamental Rights are a set of rights guaranteed by the Constitution of India. They include the right to equality, right to freedom, right against exploitation, right to freedom of religion, cultural and educational rights, and right to constitutional remedies.",
+      "what is the right to information act": "The Right to Information (RTI) Act, 2005, empowers citizens to seek information from public authorities to promote transparency and accountability in government functioning.",
+      "what is the consumer protection act": "The Consumer Protection Act, 2019, provides for the protection of consumer rights and establishes authorities for timely and effective administration and settlement of consumer disputes.",
+      "what is the dowry prohibition act": "The Dowry Prohibition Act, 1961, prohibits the giving or taking of dowry in India. It aims to prevent the exploitation of women and curb the practice of dowry.",
+      "what is the indian contract act": "The Indian Contract Act, 1872, governs the law of contracts in India. It defines the conditions for a valid contract, the rights and obligations of parties, and the consequences of breach of contract.",
+      "what is the companies act": "The Companies Act, 2013, regulates the incorporation, management, and dissolution of companies in India. It also provides for corporate governance and investor protection.",
+      "what is the motor vehicles act": "The Motor Vehicles Act, 1988, regulates the licensing of drivers, registration of vehicles, and traffic rules in India.",
+      "what is the environmental protection act": "The Environmental Protection Act, 1986, provides for the protection and improvement of the environment and the prevention of hazards to human beings, other living creatures, plants, and property.",
+      "what is the information technology act": "The Information Technology Act, 2000, provides legal recognition for electronic transactions and deals with cybercrimes and electronic commerce.",
+
+      // Intellectual Property Rights (IPR) Questions
+      "what is a patent": "A patent is an exclusive right granted for an invention, which is a product or a process that provides a new way of doing something or offers a new technical solution to a problem.",
+      "what is a trademark": "A trademark is a recognizable sign, design, or expression that identifies products or services of a particular source from those of others.",
+      "what is copyright": "Copyright is a legal right that grants the creator of an original work exclusive rights to its use and distribution, usually for a limited time.",
+      "what is intellectual property": "Intellectual property (IP) refers to creations of the mind, such as inventions, literary and artistic works, designs, symbols, names, and images used in commerce.",
+      "how to register a patent in india": "To register a patent in India, you need to file a patent application with the Indian Patent Office, including a detailed description of the invention, claims, and necessary fees.",
+      "how to register a trademark in india": "To register a trademark in India, you need to file an application with the Trademark Registry, including the trademark, class of goods/services, and necessary fees.",
+      "what is the duration of a patent in india": "The duration of a patent in India is 20 years from the date of filing the patent application.",
+      "what is the duration of copyright in india": "The duration of copyright in India is the lifetime of the author plus 60 years.",
+      "what is the punishment for trademark infringement": "The punishment for trademark infringement in India includes imprisonment for up to 3 years and a fine.",
+      "what is the punishment for copyright infringement": "The punishment for copyright infringement in India includes imprisonment for up to 3 years and a fine.",
+    };
+
+    // Function to display suggestions
+    function showSuggestions(input) {
+      const suggestions = Object.keys(legalQA).filter((key) =>
+        key.includes(input.toLowerCase())
+      );
+      const suggestionsDiv = document.getElementById("suggestions");
+      suggestionsDiv.innerHTML = "";
+
+      if (input.length > 0) {
+        suggestions.forEach((suggestion) => {
+          const suggestionElement = document.createElement("div");
+          suggestionElement.className = "suggestion";
+          suggestionElement.textContent = suggestion;
+          suggestionElement.addEventListener("click", () => {
+            document.getElementById("userInput").value = suggestion;
+            suggestionsDiv.innerHTML = "";
+          });
+          suggestionsDiv.appendChild(suggestionElement);
+        });
+      }
+    }
+
+    // Function to send user message
+    function sendMessage() {
+      const userInput = document.getElementById("userInput").value.toLowerCase();
+      if (userInput.trim() === "") return;
+
+      // Display user's message
+      const chatlogs = document.getElementById("chatlogs");
+      const userMessage = document.createElement("div");
+      userMessage.className = "message user";
+      userMessage.textContent = `You: ${userInput}`;
+      chatlogs.appendChild(userMessage);
+
+      // Clear input
+      document.getElementById("userInput").value = "";
+
+      // Bot response
+      setTimeout(() => {
+        const botMessage = document.createElement("div");
+        botMessage.className = "message bot";
+
+        let response = "Bot: I'm sorry, I don't have information on that. Please consult a legal expert.";
+        for (const key in legalQA) {
+          if (userInput.includes(key)) {
+            response = `Bot: ${legalQA[key]}`;
+            break;
+          }
+        }
+
+        botMessage.textContent = response;
+        chatlogs.appendChild(botMessage);
+
+        // Scroll to the bottom of the chatbox
+        chatlogs.scrollTop = chatlogs.scrollHeight;
+      }, 1000);
+    }
+
+    // Event listeners
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("userInput").addEventListener("input", (e) => {
+      showSuggestions(e.target.value);
+    });
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      document.getElementById("chatlogs").innerHTML = "";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netcenter Government Services Chatbot</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #3498db;
+      --success: #27ae60;
+      --warning: #f1c40f;
+      --danger: #e74c3c;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #bdc3c7, #2c3e50);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .chatbot-container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      width: 450px;
+      height: 600px;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin: 0 0 20px 0;
+      padding: 10px;
+      background: linear-gradient(45deg, #3498db, #2c3e50);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #chatlogs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .message {
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 20px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background: var(--secondary);
+      color: white;
+      margin-left: auto;
+    }
+
+    .bot {
+      background: #e9ecef;
+      color: var(--primary);
+      margin-right: auto;
+    }
+
+    .suggestions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .suggestion {
+      background: var(--primary);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 0.9em;
+    }
+
+    .suggestion:hover {
+      transform: translateY(-2px);
+      background: var(--secondary);
+    }
+
+    #userInput {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--primary);
+      border-radius: 25px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 5px;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    #sendBtn { background: var(--success); }
+    #clearBtn { background: var(--danger); }
+    a { color: var(--secondary); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="chatbot-container">
+    <h1>Netcenter Government Services</h1>
+    <div id="chatlogs"></div>
+    <div class="suggestions" id="suggestions"></div>
+    <input type="text" id="userInput" placeholder="Ask about a service (e.g., Pension scheme)">
+    <div>
+      <button id="sendBtn">Send</button>
+      <button id="clearBtn">Clear</button>
+    </div>
+  </div>
+
+  <script>
+    const services = {
+      // Aadhaar Services (10 entries)
+      "aadhaar download": {
+        response: "Download e-Aadhaar: Visit UIDAI's official website",
+        link: "https://uidai.gov.in/",
+        details: ["Requires registered mobile number", "PDF password: PINCODE (uppercase)"]
+      },
+      "aadhaar update": {
+        response: "Update Aadhaar details: Online and offline methods available",
+        link: "https://ssup.uidai.gov.in/",
+        details: ["Charges: ₹50 (online)", "Documents required: Proof of change"]
+      },
+      // 8 more Aadhaar services...
+
+      // PAN Services (15 entries)
+      "pan card apply": {
+        response: "Apply for new PAN: NSDL or UTIITSL portals",
+        link: "https://www.onlineservices.nsdl.com/",
+        details: ["Fee: ₹107 (online payment)", "Processing time: 15-20 days"]
+      },
+      "pan correction": {
+        response: "Correct PAN details: Online request form",
+        link: "https://www.onlineservices.nsdl.com/",
+        details: ["Fee: ₹110", "Documents required: Identity/address proof"]
+      },
+      // 13 more PAN services...
+
+      // Passport Services (12 entries)
+      "passport apply": {
+        response: "New passport application: Online registration required",
+        link: "https://passportindia.gov.in/",
+        details: ["Fee: ₹1,500-3,500", "Documents: Address proof, DOB proof"]
+      },
+      // 11 more passport services...
+
+      // Social Welfare (20 entries)
+      "pension scheme": {
+        response: "National Social Assistance Programme (NSAP)",
+        link: "https://nsap.nic.in/",
+        details: ["Eligibility: BPL citizens", "Monthly pension: ₹200-500"]
+      },
+      "pm kisan samman": {
+        response: "PM-KISAN Scheme: ₹6,000/year to farmers",
+        link: "https://pmkisan.gov.in/",
+        details: ["Eligibility: Landholding farmers", "Registration through CSC"]
+      },
+      // 18 more welfare schemes...
+
+      // Education (15 entries)
+      "scholarship apply": {
+        response: "National Scholarship Portal:",
+        link: "https://scholarships.gov.in/",
+        details: ["300+ scholarship schemes", "Documents: Income certificate, marksheet"]
+      },
+      // 14 more education services...
+
+      // Health (15 entries)
+      "ayushman bharat": {
+        response: "PM-JAY: Health coverage up to ₹5 lakh",
+        link: "https://pmjay.gov.in/",
+        details: ["Eligibility: SECC database", "Coverage: 1,393 medical procedures"]
+      },
+      // 14 more health services...
+
+      // Agriculture (10 entries)
+      "pm fasal bima": {
+        response: "Crop Insurance Scheme:",
+        link: "https://pmfby.gov.in/",
+        details: ["Premium: 1.5-5% of sum insured", "Covers weather risks"]
+      },
+      // 9 more agriculture services...
+"aadhaar download": {
+        response: "Download e-Aadhaar: Visit UIDAI's official website",
+        link: "https://uidai.gov.in/",
+        details: ["Requires registered mobile number", "PDF password: PINCODE (uppercase)", "Fee: Free"]
+      },
+      // Voter ID Service
+      "voter id apply": {
+        response: "Apply for Voter ID: Visit the Election Commission of India's portal.",
+        link: "https://www.nvsp.in/",
+        details: ["Documents required: Proof of identity, residence", "Fee: Free"]
+      },
+      // PAN Card Service
+      "pan card apply": {
+        response: "Apply for a new PAN Card: Visit NSDL or UTIITSL websites.",
+        link: "https://www.onlineservices.nsdl.com/",
+        details: ["Fee: ₹107 (Online payment)", "Processing time: 15-20 days"]
+      },
+      // Passport Service
+      "passport apply": {
+        response: "Apply for Passport: Visit the Passport Seva website.",
+        link: "https://passportindia.gov.in/",
+        details: ["Fee: ₹1,500-3,500", "Documents: Address proof, DOB proof"]
+      },
+      // Driving License Service
+      "driving license apply": {
+        response: "Apply for a Driving License: Visit the Ministry of Road Transport and Highways website.",
+        link: "https://parivahan.gov.in/parivahan/",
+        details: ["Fee: ₹200-600", "Documents required: Proof of age, identity, address"]
+      },
+      // Ration Card Service
+      "ration card apply": {
+        response: "Apply for Ration Card: Visit the state government website.",
+        link: "https://www.nfs.delhi.gov.in/",
+        details: ["Fee: Free", "Documents required: Proof of identity, residence"]
+      },
+      // Birth Certificate Service
+      "birth certificate apply": {
+        response: "Apply for Birth Certificate: Visit the local municipal corporation.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies by state", "Documents: Hospital records, proof of birth"]
+      },
+      // Marriage Certificate Service
+      "marriage certificate apply": {
+        response: "Apply for Marriage Certificate: Visit the local registrar office.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies by state", "Documents required: Marriage proof, identity proof"]
+      },
+      // Death Certificate Service
+      "death certificate apply": {
+        response: "Apply for Death Certificate: Visit the local municipal corporation.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies by state", "Documents: Death proof, identity proof of deceased"]
+      },
+      // Income Certificate Service
+      "income certificate apply": {
+        response: "Apply for Income Certificate: Visit the state government website.",
+        link: "https://www.incometaxindia.gov.in/",
+        details: ["Fee: Free", "Documents: Income proof, identity proof"]
+      },
+      // Caste Certificate Service
+      "caste certificate apply": {
+        response: "Apply for Caste Certificate: Visit the state government website.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Free", "Documents required: Proof of caste, identity proof"]
+      },
+      // Disability Certificate Service
+      "disability certificate apply": {
+        response: "Apply for Disability Certificate: Visit the state government website.",
+        link: "https://www.disabilityaffairs.gov.in/",
+        details: ["Fee: Free", "Documents: Medical proof of disability"]
+      },
+      // Legal Heir Certificate Service
+      "legal heir certificate apply": {
+        response: "Apply for Legal Heir Certificate: Visit the local government office.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies by state", "Documents required: Death certificate of deceased, family proof"]
+      },
+      // Domicile Certificate Service
+      "domicile certificate apply": {
+        response: "Apply for Domicile Certificate: Visit the local government office.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies by state", "Documents: Proof of residence"]
+      },
+      // Arms License Service
+      "arms license apply": {
+        response: "Apply for Arms License: Visit the Ministry of Home Affairs website.",
+        link: "https://mha.gov.in/",
+        details: ["Fee: Varies", "Documents required: Proof of identity, address"]
+      },
+      // Photo Identity Card Service
+      "photo identity card apply": {
+        response: "Apply for Photo Identity Card: Visit the local government office.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Free", "Documents: Proof of identity"]
+      },
+      // Election Card Service
+      "election card apply": {
+        response: "Apply for Election Card: Visit the Election Commission website.",
+        link: "https://www.nvsp.in/",
+        details: ["Fee: Free", "Documents: Proof of residence, identity"]
+      },
+      // NOC Service
+      "noc apply": {
+        response: "Apply for No Objection Certificate (NOC): Visit the local government office.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies", "Documents required: Proof of purpose for NOC"]
+      },
+      // Student Identity Card Service
+      "student identity card apply": {
+        response: "Apply for Student ID Card: Visit your educational institution's website.",
+        link: "https://www.scholarships.gov.in/",
+        details: ["Fee: Free", "Documents: Proof of enrollment"]
+      },
+      // Trade License Service
+      "trade license apply": {
+        response: "Apply for Trade License: Visit the local municipal corporation.",
+        link: "https://www.municipalcorporation.gov.in/",
+        details: ["Fee: Varies by trade", "Documents required: Proof of business"]
+      },
+	   // **Legal and Business Documents**
+      "court judgment apply": {
+        response: "Apply for Court Judgment: Visit your respective court or district court.",
+        link: "https://districts.ecourts.gov.in/",
+        details: ["Fee: Varies by case", "Documents required: Case details, identity proof"]
+      },
+      "divorce certificate apply": {
+        response: "Apply for Divorce Certificate: Visit the local Family Court.",
+        link: "https://www.ecourts.gov.in/",
+        details: ["Fee: Varies by state", "Documents required: Marriage proof, Divorce decree"]
+      },
+      "property title deed apply": {
+        response: "Apply for Property Title Deed: Visit the local sub-registrar office.",
+        link: "https://www.registration.tn.gov.in/",
+        details: ["Fee: Varies by state", "Documents required: Property documents, identity proof"]
+      },
+      "lease agreement apply": {
+        response: "Apply for Lease Agreement: Draft the agreement and get it registered.",
+        link: "https://www.indiacode.nic.in/",
+        details: ["Fee: Varies by state", "Documents required: Property details, lease terms"]
+      },
+      "will document apply": {
+        response: "Apply for Will Document: Register your will with a local notary or registrar.",
+        link: "https://www.indiacode.nic.in/",
+        details: ["Fee: Varies", "Documents required: Identification proof, will details"]
+      },
+      "land acquisition certificate apply": {
+        response: "Apply for Land Acquisition Certificate: Visit the District Land Acquisition Office.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies", "Documents required: Land documents, purpose of acquisition"]
+      },
+      "settlement agreement apply": {
+        response: "Apply for Settlement Agreement: Visit the local civil court.",
+        link: "https://www.ecourts.gov.in/",
+        details: ["Fee: Varies by case", "Documents required: Settlement terms, signatures of parties"]
+      },
+      "power of attorney apply": {
+        response: "Apply for Power of Attorney: Visit the local sub-registrar office.",
+        link: "https://www.india.gov.in/",
+        details: ["Fee: Varies by state", "Documents required: Proof of identity and address"]
+      },
+      "company registration certificate apply": {
+        response: "Apply for Company Registration: Visit the Ministry of Corporate Affairs website.",
+        link: "https://www.mca.gov.in/",
+        details: ["Fee: Varies by type of company", "Documents required: Business plan, director details"]
+      },
+      "gst registration certificate apply": {
+        response: "Apply for GST Registration: Visit the GST portal.",
+        link: "https://www.gst.gov.in/",
+        details: ["Fee: Free", "Documents required: Business proof, PAN, bank account details"]
+      },
+      "fssai license apply": {
+        response: "Apply for FSSAI License: Visit the FSSAI website.",
+        link: "https://www.fssai.gov.in/",
+        details: ["Fee: ₹2,000-₹5,000", "Documents required: Food business details, PAN, address proof"]
+      },
+      "business license apply": {
+        response: "Apply for Business License: Visit the local municipal corporation.",
+        link: "https://www.indiacode.nic.in/",
+        details: ["Fee: Varies by business type", "Documents required: Proof of business activity"]
+      },
+      "income tax return (itr) filing apply": {
+        response: "File Income Tax Return (ITR): Visit the Income Tax Department website.",
+        link: "https://incometaxindiaefiling.gov.in/",
+        details: ["Fee: Free", "Documents required: PAN, income details, bank statements"]
+      },
+      "bankruptcy certificate apply": {
+        response: "Apply for Bankruptcy Certificate: Visit the local bankruptcy court.",
+        link: "https://www.ecourts.gov.in/",
+        details: ["Fee: Varies by case", "Documents required: Financial statements, debt details"]
+      },
+      "consumer complaint certificate apply": {
+        response: "Apply for Consumer Complaint Certificate: Visit the Consumer Forum.",
+        link: "https://www.consumercomplaints.in/",
+        details: ["Fee: Free", "Documents required: Complaint details, proof of purchase"]
+      },
+      "customs duty receipt apply": {
+        response: "Apply for Customs Duty Receipt: Visit the Customs Department.",
+        link: "https://www.cbic.gov.in/",
+        details: ["Fee: Varies", "Documents required: Import/export documents"]
+      },
+      "trade mark registration apply": {
+        response: "Apply for Trade Mark Registration: Visit the Intellectual Property India website.",
+        link: "https://ipindia.gov.in/",
+        details: ["Fee: ₹4,500-₹9,000", "Documents required: Trademark details, business information"]
+      },
+      "patent registration apply": {
+        response: "Apply for Patent Registration: Visit the Patent Office website.",
+        link: "https://www.ipindia.gov.in/",
+        details: ["Fee: ₹1,600-₹10,000", "Documents required: Invention details, inventor details"]
+      },
+      "import/export license apply": {
+        response: "Apply for Import/Export License: Visit the Directorate General of Foreign Trade (DGFT).",
+        link: "https://www.dgft.gov.in/",
+        details: ["Fee: Varies by product", "Documents required: Business registration, tax returns"]
+      },
+      "public liability insurance apply": {
+        response: "Apply for Public Liability Insurance: Visit the insurance provider's website.",
+        link: "https://www.irdai.gov.in/",
+        details: ["Fee: Varies", "Documents required: Business details, insurance policy"]
+      },
+	   // **Welfare Schemes**
+      "pm kisan samman nidhi": {
+        response: "PM Kisan Samman Nidhi: Direct income support for farmers.",
+        link: "https://pmkisan.gov.in/",
+        details: ["Eligibility: Small and marginal farmers.", "Annual benefit: ₹6,000 per year.", "Application Process: Self-registration through the portal or CSC."]
+      },
+      "mgnrega": {
+        response: "Mahatma Gandhi National Rural Employment Guarantee Act (MGNREGA): Employment guarantee for rural families.",
+        link: "https://nrega.nic.in/",
+        details: ["Eligibility: Rural households in need of employment.", "Wage: ₹200-₹500 per day.", "Documents required: Aadhar, Bank Account."]
+      },
+      "pension scheme": {
+        response: "National Social Assistance Program (NSAP): Pension for elderly, widow, and disabled.",
+        link: "https://nsap.nic.in/",
+        details: ["Eligibility: Senior citizens, widows, and disabled individuals.", "Pension: ₹200-₹500 per month.", "Documents: Age proof, Identity proof."]
+      },
+      "atal pension yojana": {
+        response: "Atal Pension Yojana (APY): Pension scheme for unorganized sector workers.",
+        link: "https://www.npscra.nsdl.co.in/atal-pension-yojana.html",
+        details: ["Eligibility: Citizens aged 18-40 years.", "Monthly contribution based on pension amount chosen.", "Documents: Aadhar, bank details."]
+      },
+      "pradhan mantri jan dhan yojana": {
+        response: "Pradhan Mantri Jan Dhan Yojana (PMJDY): Financial inclusion for unbanked citizens.",
+        link: "https://pmjdy.gov.in/",
+        details: ["Eligibility: All Indian citizens.", "Benefits: Zero balance accounts, overdraft facility, insurance.", "Documents: Aadhar, Proof of Identity."]
+      },
+      "pradhan mantri awas yojana": {
+        response: "Pradhan Mantri Awas Yojana: Affordable housing for urban poor.",
+        link: "https://pmaymis.gov.in/",
+        details: ["Eligibility: Low-income groups, EWS, LIG, MIG.", "Benefits: Subsidy for home construction or purchase.", "Documents: Proof of income, Aadhar."]
+      },
+      "national social assistance program": {
+        response: "National Social Assistance Program: Cash assistance for vulnerable groups.",
+        link: "https://nsap.nic.in/",
+        details: ["Eligibility: Senior citizens, widows, disabled.", "Pension: ₹200-₹500 per month.", "Documents: Proof of age, Identity."]
+      },
+      "pmjay": {
+        response: "PMJAY (Ayushman Bharat): Health insurance for low-income families.",
+        link: "https://pmjay.gov.in/",
+        details: ["Eligibility: Families under the SECC database.", "Coverage: ₹5 lakh per family per year.", "Documents: Aadhar, Income proof."]
+      },
+      "indira gandhi national old age pension scheme": {
+        response: "Indira Gandhi National Old Age Pension Scheme: Monthly pension for elderly citizens.",
+        link: "https://nsap.nic.in/",
+        details: ["Eligibility: Senior citizens aged 60+.", "Pension: ₹200-₹500.", "Documents: Age proof, Aadhar."]
+      },
+      "antyodaya anna yojana": {
+        response: "Antyodaya Anna Yojana: Provides subsidized food to the poorest families.",
+        link: "https://www.nfsa.gov.in/",
+        details: ["Eligibility: Poorest families.", "Benefits: 35 kg of food grains per month.", "Documents: Proof of economic status."]
+      },
+      "pradhan mantri shram yogi maan-dhan yojana": {
+        response: "Pradhan Mantri Shram Yogi Maan-Dhan Yojana: Pension scheme for unorganized sector workers.",
+        link: "https://labour.gov.in/",
+        details: ["Eligibility: Unorganized sector workers aged 18-40.", "Pension: ₹3,000 per month after age 60.", "Documents: Aadhar, bank account."]
+      },
+      "pm ujjwala yojana": {
+        response: "PM Ujjwala Yojana: Free LPG connections for BPL households.",
+        link: "https://www.pmujjwalayojana.com/",
+        details: ["Eligibility: Below Poverty Line (BPL) households.", "Benefits: Free LPG connection.", "Documents: Proof of BPL."]
+      },
+      "mudra loan scheme": {
+        response: "MUDRA Loan Scheme: Provides loans for small businesses.",
+        link: "https://www.mudra.org.in/",
+        details: ["Eligibility: Small and micro-enterprises.", "Loan amount: ₹50,000 to ₹10 lakh.", "Documents: Business plan, financial statements."]
+      },
+      "national rural livelihood mission": {
+        response: "National Rural Livelihood Mission (NRLM): Livelihood support for rural women.",
+        link: "https://aajeevika.gov.in/",
+        details: ["Eligibility: Rural women.", "Benefits: Skill development, financial support.", "Documents: Proof of residence."]
+      },
+      "swachh bharat mission": {
+        response: "Swachh Bharat Mission: Clean India Mission for sanitation.",
+        link: "https://swachhbharatmission.gov.in/",
+        details: ["Eligibility: All citizens.", "Benefits: Incentives for building toilets, sanitation coverage.", "Documents: Proof of residence."]
+      },
+      "shishu mangal yojana": {
+        response: "Shishu Mangal Yojana: Health and nutrition support for children.",
+        link: "https://www.india.gov.in/",
+        details: ["Eligibility: Children in need of health support.", "Benefits: Nutritional and healthcare support.", "Documents: Child health records."]
+      },
+      "swarna jayanti shahari rozgar yojana": {
+        response: "Swarna Jayanti Shahari Rozgar Yojana: Employment generation in urban areas.",
+        link: "https://www.mhupa.gov.in/",
+        details: ["Eligibility: Urban poor and unemployed youth.", "Benefits: Subsidized employment schemes.", "Documents: Proof of residence."]
+      },
+      "scholarship scheme": {
+        response: "Scholarship Scheme: Financial support for students.",
+        link: "https://scholarships.gov.in/",
+        details: ["Eligibility: Students from economically weaker sections.", "Benefits: Financial aid for education.", "Documents: Income certificate, marksheet."]
+      },
+      "national family benefit scheme": {
+        response: "National Family Benefit Scheme: Financial assistance for families upon the death of the breadwinner.",
+        link: "https://nsap.nic.in/",
+        details: ["Eligibility: Below Poverty Line families.", "Benefit: ₹20,000 to ₹30,000.", "Documents: Death certificate, family proof."]
+      },
+      "self-employment scheme for rehabilitation of manual scavengers": {
+        response: "Self-Employment Scheme for Rehabilitation of Manual Scavengers: Support for self-employment.",
+        link: "https://socialjustice.gov.in/",
+        details: ["Eligibility: Manual scavengers.", "Benefits: Support for self-employment, skill training.", "Documents: Proof of employment."]
+      },
+      "pradhan mantri kisan maan dhan yojana": {
+        response: "Pradhan Mantri Kisan Maan Dhan Yojana: Pension for small farmers.",
+        link: "https://pmkisan.gov.in/",
+        details: ["Eligibility: Small farmers.", "Pension: ₹3,000 per month after 60 years.", "Documents: Landholding details, Aadhar."]
+      },
+      "one nation one ration card scheme": {
+        response: "One Nation One Ration Card Scheme: Universal access to food grains.",
+        link: "https://www.nfsa.gov.in/",
+        details: ["Eligibility: Ration cardholders.", "Benefits: Access to food grains across India.", "Documents: Ration card details."]
+      },
+      "pradhan mantri fasal bima yojana": {
+        response: "Pradhan Mantri Fasal Bima Yojana: Crop insurance for farmers.",
+        link: "https://pmfby.gov.in/",
+        details: ["Eligibility: Farmers.", "Premium: 1.5-5% of sum insured.", "Documents: Crop details, landholding."]
+      },
+      "farmers welfare scheme": {
+        response: "Farmers Welfare Scheme: Various support schemes for farmers.",
+        link: "https://pmkisan.gov.in/",
+        details: ["Eligibility: Farmers.", "Benefits: Subsidy on inputs, loans, insurance.", "Documents: Land documents, bank account."]
+      },
+      "beti bachao beti padhao yojana": {
+        response: "Beti Bachao Beti Padhao Yojana: Scheme to save and educate the girl child.",
+        link: "https://wcd.nic.in/",
+        details: ["Eligibility: All families.", "Benefits: Scholarships for girls, health benefits.", "Documents: Birth certificate."]
+      },
+	    // **Health Services**
+      "national health mission": {
+        response: "National Health Mission: Improving healthcare services in rural and urban areas.",
+        link: "https://nhm.gov.in/",
+        details: ["Eligibility: All citizens.", "Benefits: Affordable healthcare services, maternal health care.", "Documents: Proof of residence."]
+      },
+      "ayushman bharat pmjay": {
+        response: "Ayushman Bharat – PM-JAY: Health insurance scheme for the poor and vulnerable.",
+        link: "https://pmjay.gov.in/",
+        details: ["Eligibility: Low-income families listed in SECC.", "Coverage: ₹5 lakh per family per year.", "Documents: Aadhar, income proof."]
+      },
+      "national vaccination program": {
+        response: "National Vaccination Program: Vaccination to prevent diseases.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: All citizens, priority for children and senior citizens.", "Benefits: Free vaccinations for preventable diseases.", "Documents: Health records."]
+      },
+      "maternity benefit scheme": {
+        response: "Maternity Benefit Scheme: Financial support for maternity leave and healthcare.",
+        link: "https://wcd.nic.in/",
+        details: ["Eligibility: Pregnant women and lactating mothers.", "Benefit: ₹6,000 for maternity care.", "Documents: Medical certificate, Aadhar."]
+      },
+      "health wellness centers": {
+        response: "Health & Wellness Centers: Providing comprehensive healthcare services.",
+        link: "https://nhm.gov.in/",
+        details: ["Eligibility: All citizens.", "Benefits: Free healthcare services, medical advice.", "Documents: Proof of residence."]
+      },
+      "pradhan mantri swasthya suraksha yojana": {
+        response: "Pradhan Mantri Swasthya Suraksha Yojana: Health insurance and infrastructure development.",
+        link: "https://pmssy-mohfw.nic.in/",
+        details: ["Eligibility: Citizens with medical needs.", "Benefits: Free treatment at government hospitals.", "Documents: Aadhar, income proof."]
+      },
+      "free diagnostic tests": {
+        response: "Free Diagnostic Tests: Providing free diagnostic services in government hospitals.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: All citizens.", "Benefits: Free diagnostic tests in select government hospitals.", "Documents: Medical referral."]
+      },
+      "rashtriya swasthya bima yojana": {
+        response: "Rashtriya Swasthya Bima Yojana (RSBY): Health insurance for below poverty line families.",
+        link: "https://www.rsby.gov.in/",
+        details: ["Eligibility: Below Poverty Line (BPL) families.", "Coverage: ₹30,000 per year.", "Documents: BPL card, Aadhar."]
+      },
+      "tb free india program": {
+        response: "TB Free India Program: Initiative to eliminate tuberculosis in India.",
+        link: "https://tbcindia.gov.in/",
+        details: ["Eligibility: All citizens.", "Benefits: Free TB treatment.", "Documents: Medical referral."]
+      },
+      "national mental health program": {
+        response: "National Mental Health Program: Services for mental health and well-being.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: All citizens.", "Benefits: Mental health services, counseling.", "Documents: Referral from healthcare provider."]
+      },
+      "health insurance scheme for bpl families": {
+        response: "Health Insurance Scheme for BPL Families: Providing health coverage for BPL families.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: Below Poverty Line families.", "Coverage: ₹30,000 for hospitalization.", "Documents: BPL card, Aadhar."]
+      },
+      "blood donation certificate": {
+        response: "Blood Donation Certificate: Certificate for blood donors.",
+        link: "https://www.nationalbloodtransfusioncouncil.gov.in/",
+        details: ["Eligibility: Blood donors.", "Benefits: Certificate for voluntary blood donation.", "Documents: Identity proof."]
+      },
+      "tb notification": {
+        response: "TB Notification: Reporting tuberculosis cases in India.",
+        link: "https://www.tbcindia.gov.in/",
+        details: ["Eligibility: TB patients.", "Benefits: TB diagnosis and treatment.", "Documents: TB medical report."]
+      },
+      "hiv aids certificate": {
+        response: "HIV/AIDS Certificate: Medical certificate for individuals diagnosed with HIV/AIDS.",
+        link: "https://www.naco.gov.in/",
+        details: ["Eligibility: HIV/AIDS patients.", "Benefits: Access to medical care, treatment.", "Documents: Medical report."]
+      },
+      "mother and child health certification": {
+        response: "Mother and Child Health Certification: Ensuring health support for mothers and children.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: Pregnant women, children under 5 years.", "Benefits: Health checks, vaccination.", "Documents: Birth certificate, Aadhar."]
+      },
+      "nutritional support to people living with hiv": {
+        response: "Nutritional Support to People Living with HIV (NSP): Providing nutritional support.",
+        link: "https://www.naco.gov.in/",
+        details: ["Eligibility: People living with HIV.", "Benefits: Nutritional supplements.", "Documents: HIV medical certification."]
+      },
+      "free sanitation services": {
+        response: "Free Sanitation Services: Access to free sanitation services in rural and urban areas.",
+        link: "https://swachhbharatmission.gov.in/",
+        details: ["Eligibility: All citizens.", "Benefits: Free sanitation facilities.", "Documents: Proof of residence."]
+      },
+      "emergency health response fund": {
+        response: "Emergency Health Response Fund: Fund for handling medical emergencies.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: All citizens in emergency health situations.", "Benefits: Financial aid for medical emergencies.", "Documents: Medical emergency proof."]
+      },
+      "welfare health scheme for government employees": {
+        response: "Welfare Health Scheme for Government Employees: Health benefits for government employees.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: Government employees.", "Benefits: Free medical treatment, health insurance.", "Documents: Employee ID, medical certificate."]
+      },
+      "free cataract surgery scheme": {
+        response: "Free Cataract Surgery Scheme: Free surgery for cataract patients.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: Senior citizens, low-income groups.", "Benefits: Free cataract surgery.", "Documents: Age proof, medical referral."]
+      },
+      "free polio vaccine": {
+        response: "Free Polio Vaccine: Providing free polio vaccines to children.",
+        link: "https://www.polioeradication.org/",
+        details: ["Eligibility: Children under 5 years.", "Benefits: Free polio vaccination.", "Documents: Birth certificate."]
+      },
+      "vaccination for children under 5 years": {
+        response: "Vaccination for Children Under 5 Years: Free vaccines for children under 5.",
+        link: "https://www.mohfw.gov.in/",
+        details: ["Eligibility: Children under 5 years.", "Benefits: Free vaccination for preventable diseases.", "Documents: Birth certificate."]
+      },
+	   // **Education Services**
+      "national scholarship portal": {
+        response: "National Scholarship Portal (NSP): Scholarships for students from economically weaker sections.",
+        link: "https://scholarships.gov.in/",
+        details: ["Eligibility: Students from economically weaker sections.", "Benefits: Financial aid for education.", "Documents: Income certificate, marksheet."]
+      },
+      "national eligibility test": {
+        response: "National Eligibility Test (NET): Eligibility test for college and university teachers.",
+        link: "https://www.ugc.ac.in/",
+        details: ["Eligibility: Postgraduate students.", "Benefits: Qualifying for teaching in universities.", "Documents: Postgraduate degree, ID proof."]
+      },
+      "indian certificate of secondary education": {
+        response: "Indian Certificate of Secondary Education (ICSE): Certification for secondary education.",
+        link: "https://www.cisce.org/",
+        details: ["Eligibility: Secondary school students.", "Benefits: Recognized education certification.", "Documents: Marksheet, School enrollment."]
+      },
+      "aipmt": {
+        response: "All India Pre-Medical Test (AIPMT): Entrance exam for medical college admission.",
+        link: "https://www.nbe.edu.in/",
+        details: ["Eligibility: Students seeking admission to medical colleges.", "Benefits: Admission to medical courses.", "Documents: Aadhar, education certificates."]
+      },
+      "neet": {
+        response: "NEET (National Eligibility cum Entrance Test): Entrance test for medical admissions.",
+        link: "https://neet.nta.nic.in/",
+        details: ["Eligibility: Students seeking medical admissions.", "Benefits: Admission to medical colleges.", "Documents: Aadhar, education certificates."]
+      },
+      "jee": {
+        response: "Joint Entrance Exam (JEE): Entrance exam for IITs and NITs.",
+        link: "https://jeemain.nta.nic.in/",
+        details: ["Eligibility: Students aspiring for engineering degrees.", "Benefits: Admission to IITs, NITs, and other engineering colleges.", "Documents: Aadhar, education certificates."]
+      },
+      "nit iiit admission certificate": {
+        response: "NIT/IIIT Admission Certificate: Admission certificates for NITs and IIITs.",
+        link: "https://www.nit.edu.in/",
+        details: ["Eligibility: JEE qualified candidates.", "Benefits: Admission to National Institutes of Technology and Indian Institutes of Information Technology.", "Documents: JEE rank certificate."]
+      },
+      "certificate of secondary education": {
+        response: "Certificate of Secondary Education (CSE): Certification for secondary education completion.",
+        link: "https://www.cisce.org/",
+        details: ["Eligibility: Students completing secondary school.", "Benefits: Official secondary school completion certificate.", "Documents: School enrollment, mark sheet."]
+      },
+      "school leaving certificate": {
+        response: "School Leaving Certificate (SLC): Certificate for leaving the school.",
+        link: "https://www.india.gov.in/",
+        details: ["Eligibility: Students leaving the school.", "Benefits: Proof of school attendance and completion.", "Documents: School records."]
+      },
+      "university degree certificate": {
+        response: "University Degree Certificate: Certification of completion of university degree.",
+        link: "https://www.ugc.ac.in/",
+        details: ["Eligibility: University graduates.", "Benefits: Proof of graduation for employment or higher studies.", "Documents: University records."]
+      },
+      "postgraduate degree certificate": {
+        response: "Postgraduate Degree Certificate: Certification of completion of postgraduate studies.",
+        link: "https://www.ugc.ac.in/",
+        details: ["Eligibility: Postgraduate students.", "Benefits: Official certificate for completion of a master's program.", "Documents: Postgraduate transcripts."]
+      },
+      "internship completion certificate": {
+        response: "Internship Completion Certificate: Certification for completing an internship.",
+        link: "https://www.india.gov.in/",
+        details: ["Eligibility: Students completing internships.", "Benefits: Proof of internship completion.", "Documents: Internship supervisor's sign-off."]
+      },
+      "training certificate": {
+        response: "Training Certificate: Certification for completing a skill development or professional training.",
+        link: "https://www.nsdcindia.org/",
+        details: ["Eligibility: Students or professionals completing training programs.", "Benefits: Official recognition of skill development.", "Documents: Training program completion certificate."]
+      },
+      "skill development certification": {
+        response: "Skill Development Certification: Certification for completing skill development programs.",
+        link: "https://www.nsdcindia.org/",
+        details: ["Eligibility: Individuals completing skill development courses.", "Benefits: Improved career prospects.", "Documents: Course completion certificate."]
+      },
+      "technical education certificate": {
+        response: "Technical Education Certificate: Certification for completing technical education programs.",
+        link: "https://www.aicte-india.org/",
+        details: ["Eligibility: Technical education graduates.", "Benefits: Official certification for technical qualifications.", "Documents: Education transcripts."]
+      },
+      "adult education certification": {
+        response: "Adult Education Certification: Certification for completing adult education programs.",
+        link: "https://www.nios.ac.in/",
+        details: ["Eligibility: Adults seeking to complete basic education.", "Benefits: Certification for completing basic education.", "Documents: Education transcripts."]
+      },
+      "educational loan certificate": {
+        response: "Educational Loan Certificate: Certificate for obtaining an educational loan.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Students applying for educational loans.", "Benefits: Financial aid for higher education.", "Documents: Loan application, admission proof."]
+      },
+      "teacher's training certificate": {
+        response: "Teacher’s Training Certificate: Certification for teacher training programs.",
+        link: "https://www.ncte.gov.in/",
+        details: ["Eligibility: Individuals completing teacher training programs.", "Benefits: Official certificate for teaching qualification.", "Documents: Training completion certificate."]
+      },
+      "student loan scheme certificate": {
+        response: "Student Loan Scheme Certificate: Certificate for obtaining student loans.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Students applying for loans for higher education.", "Benefits: Loan for tuition, books, and living expenses.", "Documents: Admission proof, financial documents."]
+      },
+      "hostel admission certificate": {
+        response: "Hostel Admission Certificate: Certificate for hostel accommodation.",
+        link: "https://www.hostelworld.com/",
+        details: ["Eligibility: Students applying for hostel admission.", "Benefits: Guaranteed accommodation for students.", "Documents: Admission proof, ID proof."]
+      },
+      "national vocational qualification framework certificate": {
+        response: "National Vocational Qualification Framework (NVQF) Certificate: Certification for vocational training.",
+        link: "https://www.nvqf.gov.in/",
+        details: ["Eligibility: Vocational training candidates.", "Benefits: Official recognition of vocational skills.", "Documents: Training program certificate."]
+      },
+      "scholarship for higher education": {
+        response: "Scholarship for Higher Education: Financial assistance for higher education students.",
+        link: "https://scholarships.gov.in/",
+        details: ["Eligibility: Students pursuing higher education.", "Benefits: Financial aid for tuition fees.", "Documents: Income certificate, marksheet."]
+      },
+      "mhrd scholarship": {
+        response: "MHRD Scholarship: Scholarships for students from economically weaker sections.",
+        link: "https://mhrd.gov.in/",
+        details: ["Eligibility: Students from economically weaker backgrounds.", "Benefits: Financial aid for education.", "Documents: Income certificate, marksheet."]
+      },
+      "post-matric scholarship": {
+        response: "Post-matric Scholarship: Scholarship for students after matriculation.",
+        link: "https://scholarships.gov.in/",
+        details: ["Eligibility: Students pursuing post-matriculation studies.", "Benefits: Financial aid for education.", "Documents: Income certificate, marksheet."]
+      },
+      "nsdc certification": {
+        response: "National Skill Development Corporation (NSDC) Certification: Certification for skill development.",
+        link: "https://www.nsdcindia.org/",
+        details: ["Eligibility: Individuals completing skill development programs.", "Benefits: Career advancement.", "Documents: Course completion certificate."]
+      },
+      "minority scholarship scheme": {
+        response: "Minority Scholarship Scheme: Scholarships for minority students.",
+        link: "https://scholarships.gov.in/",
+        details: ["Eligibility: Students from minority communities.", "Benefits: Financial aid for education.", "Documents: Minority certificate, marksheet."]
+      },
+      "international student certification": {
+        response: "International Student Certification: Certification for students studying abroad.",
+        link: "https://studyinthailand.org/",
+        details: ["Eligibility: Students studying abroad.", "Benefits: Official certification for studies abroad.", "Documents: Student visa, admission proof."]
+      },
+      "distance learning course certificate": {
+        response: "Distance Learning Course Certificate: Certification for completing distance learning programs.",
+        link: "https://www.swayam.gov.in/",
+        details: ["Eligibility: Students enrolled in distance learning programs.", "Benefits: Certification for course completion.", "Documents: Course completion certificate."]
+      },
+	    // **Agriculture & Rural Development Services**
+      "pm fasal bima yojana": {
+        response: "PM Fasal Bima Yojana: Crop insurance for farmers to mitigate risk.",
+        link: "https://pmfby.gov.in/",
+        details: ["Eligibility: Farmers.", "Premium: 1.5-5% of sum insured.", "Documents: Landholding details, crop details."]
+      },
+      "soil health card": {
+        response: "Soil Health Card: Provides soil health and fertility information.",
+        link: "https://www.soilhealth.dac.gov.in/",
+        details: ["Eligibility: Farmers.", "Benefits: Soil health information to improve crop yield.", "Documents: Land records."]
+      },
+      "farmer registration certificate": {
+        response: "Farmer Registration Certificate: Certification for farmers to avail benefits.",
+        link: "https://pmkisan.gov.in/",
+        details: ["Eligibility: Farmers.", "Benefits: Eligibility for government schemes.", "Documents: Proof of land ownership."]
+      },
+      "kisan credit card": {
+        response: "Kisan Credit Card (KCC): Financial support for farmers for crop cultivation.",
+        link: "https://www.pnbindia.in/",
+        details: ["Eligibility: Farmers.", "Loan amount: Varies based on landholding.", "Documents: Land records, bank account details."]
+      },
+      "agri marketing license": {
+        response: "Agri Marketing License: License for marketing agricultural produce.",
+        link: "https://www.agriculture.gov.in/",
+        details: ["Eligibility: Agricultural marketers.", "Benefits: Legal authorization to sell produce.", "Documents: Business registration, land details."]
+      },
+      "organic certification": {
+        response: "Organic Certification: Certification for organic farming practices.",
+        link: "https://apeda.gov.in/",
+        details: ["Eligibility: Organic farmers.", "Benefits: Organic certification for produce.", "Documents: Farm management records."]
+      },
+      "national agriculture market registration": {
+        response: "National Agriculture Market (eNAM) Registration: Registration for selling agricultural produce on eNAM.",
+        link: "https://www.enam.gov.in/",
+        details: ["Eligibility: Farmers, traders, and FPOs.", "Benefits: Access to national market for produce.", "Documents: Farmer's registration certificate."]
+      },
+      "irrigation scheme": {
+        response: "Irrigation Scheme: Subsidized irrigation facilities for farmers.",
+        link: "https://www.nationalirrigation.in/",
+        details: ["Eligibility: Farmers with irrigation needs.", "Benefits: Subsidized irrigation systems.", "Documents: Land records, crop details."]
+      },
+      "government loan for agriculture": {
+        response: "Government Loan for Agriculture: Loans for agricultural activities and farm improvement.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Farmers.", "Loan amount: Varies based on requirement.", "Documents: Land records, income proof."]
+      },
+      "horticulture department certification": {
+        response: "Horticulture Department Certification: Certification for horticultural practices.",
+        link: "https://www.horticulture.gov.in/",
+        details: ["Eligibility: Horticulturists.", "Benefits: Certification for horticultural produce.", "Documents: Farm management details."]
+      },
+      "livestock development scheme": {
+        response: "Livestock Development Scheme: Support for livestock farmers.",
+        link: "https://www.nddb.coop/",
+        details: ["Eligibility: Livestock farmers.", "Benefits: Subsidy for livestock development.", "Documents: Livestock management details."]
+      },
+      "mushroom farming scheme": {
+        response: "Mushroom Farming Scheme: Support for mushroom cultivation.",
+        link: "https://www.mushroomfarming.gov.in/",
+        details: ["Eligibility: Farmers interested in mushroom farming.", "Benefits: Subsidy for mushroom farming setup.", "Documents: Farm management details."]
+      },
+      "poultry farming scheme": {
+        response: "Poultry Farming Scheme: Support for poultry farming.",
+        link: "https://www.poultryfarming.gov.in/",
+        details: ["Eligibility: Poultry farmers.", "Benefits: Financial support for poultry farm setup.", "Documents: Farm details."]
+      },
+      "water harvesting project certification": {
+        response: "Water Harvesting Project Certification: Certification for water harvesting systems.",
+        link: "https://www.ruralwater.gov.in/",
+        details: ["Eligibility: Farmers and rural areas.", "Benefits: Certification for water conservation systems.", "Documents: Project details."]
+      },
+      "government farming training scheme": {
+        response: "Government Farming Training Scheme: Free training for farmers on improved agricultural practices.",
+        link: "https://www.agrifarmtraining.gov.in/",
+        details: ["Eligibility: Farmers.", "Benefits: Training on advanced farming techniques.", "Documents: Proof of farming experience."]
+      },
+      "paddy purchasing scheme": {
+        response: "Paddy Purchasing Scheme: Scheme for purchasing paddy from farmers at MSP.",
+        link: "https://www.foodcorpindia.gov.in/",
+        details: ["Eligibility: Paddy farmers.", "Benefits: Minimum Support Price (MSP) for paddy.", "Documents: Land records, crop details."]
+      },
+      "national dairy development board certification": {
+        response: "National Dairy Development Board (NDDB) Certification: Certification for dairy farmers.",
+        link: "https://www.nddb.coop/",
+        details: ["Eligibility: Dairy farmers.", "Benefits: Certification for dairy products.", "Documents: Dairy management records."]
+      },
+      "green revolution certificate": {
+        response: "Green Revolution Certificate: Certification for farmers adopting modern agricultural practices.",
+        link: "https://www.greenrevolution.gov.in/",
+        details: ["Eligibility: Farmers adopting new technologies.", "Benefits: Recognition for adopting sustainable practices.", "Documents: Farming records."]
+      },
+      "subsidy for fertilizers and seeds": {
+        response: "Subsidy for Fertilizers and Seeds: Subsidy for purchasing fertilizers and seeds.",
+        link: "https://www.indiaseeds.gov.in/",
+        details: ["Eligibility: Farmers.", "Benefits: Subsidized rates for seeds and fertilizers.", "Documents: Farmer registration, proof of need."]
+      },
+      "national mission on sustainable agriculture": {
+        response: "National Mission on Sustainable Agriculture (NMSA): Promoting sustainable farming practices.",
+        link: "https://www.nmsa.gov.in/",
+        details: ["Eligibility: Farmers adopting sustainable agriculture practices.", "Benefits: Financial support for sustainable practices.", "Documents: Farm records."]
+      },
+      "rural employment guarantee scheme": {
+        response: "Rural Employment Guarantee Scheme (REGS): Employment support in rural areas.",
+        link: "https://nrega.nic.in/",
+        details: ["Eligibility: Rural households.", "Benefits: 100 days of wage employment.", "Documents: Proof of rural residence."]
+      },
+      "rural development scheme": {
+        response: "Rural Development Scheme: Various schemes to develop rural infrastructure.",
+        link: "https://ruraldevelopment.gov.in/",
+        details: ["Eligibility: Rural populations.", "Benefits: Infrastructure and social development.", "Documents: Proof of rural residence."]
+      },
+      "pmgdisha": {
+        response: "PMGDISHA (Digital Literacy Scheme for Rural Areas): Digital literacy for rural areas.",
+        link: "https://pmgdisha.in/",
+        details: ["Eligibility: Rural citizens.", "Benefits: Digital literacy training.", "Documents: Proof of rural residence."]
+      },
+      "panchayati raj development scheme": {
+        response: "Panchayati Raj Development Scheme: Empowering local self-governments in rural areas.",
+        link: "https://panchayat.gov.in/",
+        details: ["Eligibility: Rural communities and panchayats.", "Benefits: Financial support for panchayat development.", "Documents: Panchayat registration."]
+      },
+	   // **Housing & Urban Development Services**
+      "pradhan mantri awas yojana": {
+        response: "Pradhan Mantri Awas Yojana (PMAY): Affordable housing for all.",
+        link: "https://pmaymis.gov.in/",
+        details: ["Eligibility: EWS, LIG, MIG, and Urban Poor.", "Benefits: Subsidy for constructing or purchasing houses.", "Documents: Proof of income, Aadhar."]
+      },
+      "urban property ownership certificate": {
+        response: "Urban Property Ownership Certificate: Certification for property ownership in urban areas.",
+        link: "https://www.municipalcorporation.gov.in/",
+        details: ["Eligibility: Urban property owners.", "Benefits: Legal certification of property ownership.", "Documents: Proof of ownership, Aadhar."]
+      },
+      "building construction license": {
+        response: "Building Construction License: Approval for building construction.",
+        link: "https://www.indiacode.nic.in/",
+        details: ["Eligibility: Property owners wishing to construct buildings.", "Benefits: Legal authorization for construction.", "Documents: Land ownership, architectural plan."]
+      },
+      "government housing loan scheme": {
+        response: "Government Housing Loan Scheme: Financial support for housing construction or purchase.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Low and middle-income groups.", "Loan amount: Varies based on income.", "Documents: Income proof, property documents."]
+      },
+      "municipal tax certificate": {
+        response: "Municipal Tax Certificate: Official tax receipt for municipal taxes.",
+        link: "https://www.municipalcorporation.gov.in/",
+        details: ["Eligibility: Property owners in urban areas.", "Benefits: Proof of payment for municipal taxes.", "Documents: Tax payment records."]
+      },
+      "property tax receipt": {
+        response: "Property Tax Receipt: Certificate for property tax payments.",
+        link: "https://www.municipalcorporation.gov.in/",
+        details: ["Eligibility: Property owners.", "Benefits: Proof of property tax payment.", "Documents: Property details, tax payment receipts."]
+      },
+      "electricity connection certificate": {
+        response: "Electricity Connection Certificate: Certification for electricity supply connection.",
+        link: "https://www.tnebnet.org/",
+        details: ["Eligibility: Property owners applying for electricity connection.", "Benefits: Proof of electricity connection.", "Documents: Property documents, Aadhar."]
+      },
+      "water connection certificate": {
+        response: "Water Connection Certificate: Certification for water supply connection.",
+        link: "https://www.waterboard.gov.in/",
+        details: ["Eligibility: Property owners applying for water connection.", "Benefits: Proof of water connection.", "Documents: Property documents, Aadhar."]
+      },
+      "gas connection certificate": {
+        response: "Gas Connection Certificate: Certification for LPG gas connection.",
+        link: "https://www.iocl.com/",
+        details: ["Eligibility: Property owners or tenants.", "Benefits: Gas connection for cooking.", "Documents: Proof of identity, address."]
+      },
+      "land zoning certificate": {
+        response: "Land Zoning Certificate: Certification for land zoning status.",
+        link: "https://www.urbanplanning.gov.in/",
+        details: ["Eligibility: Property owners.", "Benefits: Official classification of land use.", "Documents: Property records."]
+      },
+      "slum development certificate": {
+        response: "Slum Development Certificate: Certification for slum redevelopment projects.",
+        link: "https://www.mhupa.gov.in/",
+        details: ["Eligibility: Residents of slums.", "Benefits: Redevelopment of slum areas.", "Documents: Proof of residence, slum certificate."]
+      },
+      "urban land ceiling certificate": {
+        response: "Urban Land Ceiling Certificate: Certification for land holding in urban areas.",
+        link: "https://www.urbanland.gov.in/",
+        details: ["Eligibility: Property owners in urban areas.", "Benefits: Ceiling limit for land holding.", "Documents: Property ownership documents."]
+      },
+      "building approval certificate": {
+        response: "Building Approval Certificate: Certification for building plan approval.",
+        link: "https://www.urbanplanning.gov.in/",
+        details: ["Eligibility: Property owners wishing to build.", "Benefits: Legal approval to construct buildings.", "Documents: Building plan, property ownership."]
+      },
+      "land use conversion certificate": {
+        response: "Land Use Conversion Certificate: Certification for changing land use.",
+        link: "https://www.urbanplanning.gov.in/",
+        details: ["Eligibility: Property owners seeking land use conversion.", "Benefits: Legal conversion of land for different uses.", "Documents: Property documents, land zoning details."]
+      },
+      "no objection certificate for building": {
+        response: "No Objection Certificate (NOC) for Building: Legal approval for construction.",
+        link: "https://www.municipalcorporation.gov.in/",
+        details: ["Eligibility: Property owners constructing buildings.", "Benefits: Permission to construct as per regulations.", "Documents: Building plans, property documents."]
+      },
+      "builder developer license": {
+        response: "Builder/Developer License: License for construction developers.",
+        link: "https://www.mhupa.gov.in/",
+        details: ["Eligibility: Developers and builders.", "Benefits: Official license for construction and development.", "Documents: Business registration, proof of experience."]
+      },
+      "housing project certification": {
+        response: "Housing Project Certification: Certification for housing development projects.",
+        link: "https://www.mhupa.gov.in/",
+        details: ["Eligibility: Builders and developers.", "Benefits: Approval for housing projects.", "Documents: Project plan, environmental clearance."]
+      },
+      "flood risk zone certificate": {
+        response: "Flood Risk Zone Certificate: Certification for flood risk assessment.",
+        link: "https://www.ndma.gov.in/",
+        details: ["Eligibility: Property owners in flood-prone areas.", "Benefits: Certification for flood risk assessment.", "Documents: Property records, environmental assessment."]
+      },
+      "environment clearance for housing projects": {
+        response: "Environment Clearance for Housing Projects: Clearance for housing developments.",
+        link: "https://www.moef.gov.in/",
+        details: ["Eligibility: Housing developers.", "Benefits: Environmental clearance for development.", "Documents: Project report, environmental impact assessment."]
+      },
+      "urban infrastructure development scheme": {
+        response: "Urban Infrastructure Development Scheme: Funding and support for urban infrastructure.",
+        link: "https://www.mhupa.gov.in/",
+        details: ["Eligibility: Municipal corporations and urban bodies.", "Benefits: Financial support for infrastructure projects.", "Documents: Project proposal, city plans."]
+      },
+      "affordable housing certificate": {
+        response: "Affordable Housing Certificate: Certification for affordable housing projects.",
+        link: "https://pmaymis.gov.in/",
+        details: ["Eligibility: Affordable housing project developers.", "Benefits: Certification for affordable housing schemes.", "Documents: Project details, funding approvals."]
+      },
+	    // **Environment & Wildlife Services**
+      "environmental impact assessment": {
+        response: "Environmental Impact Assessment (EIA): A study to assess the environmental impact of a project.",
+        link: "https://www.moef.gov.in/",
+        details: ["Eligibility: Project developers.", "Benefits: Environmental impact analysis.", "Documents: Project details, environmental data."]
+      },
+      "air pollution certificate": {
+        response: "Air Pollution Certificate: Certification for air quality and pollution levels.",
+        link: "https://www.cpcb.nic.in/",
+        details: ["Eligibility: Industries, vehicles, and public entities emitting air pollutants.", "Benefits: Certification for air pollution levels.", "Documents: Pollution data, compliance report."]
+      },
+      "forest clearance certificate": {
+        response: "Forest Clearance Certificate: Clearance for projects in forest areas.",
+        link: "https://forestsclearance.nic.in/",
+        details: ["Eligibility: Projects in forest areas.", "Benefits: Official clearance for forest use.", "Documents: Project plan, environmental assessment."]
+      },
+      "wildlife protection certificate": {
+        response: "Wildlife Protection Certificate: Certification for protecting wildlife areas.",
+        link: "https://www.wildlifeindia.org/",
+        details: ["Eligibility: Wildlife conservation projects.", "Benefits: Official recognition for wildlife protection.", "Documents: Conservation plans, wildlife data."]
+      },
+      "water pollution certificate": {
+        response: "Water Pollution Certificate: Certification for water quality and pollution levels.",
+        link: "https://www.cpcb.nic.in/",
+        details: ["Eligibility: Industries and facilities discharging into water bodies.", "Benefits: Certification for water pollution levels.", "Documents: Water quality data, compliance report."]
+      },
+      "renewable energy certification": {
+        response: "Renewable Energy Certification: Certification for renewable energy generation and usage.",
+        link: "https://mnre.gov.in/",
+        details: ["Eligibility: Renewable energy generators and users.", "Benefits: Certification for renewable energy usage.", "Documents: Energy production data, system details."]
+      },
+      "clean energy certificate": {
+        response: "Clean Energy Certificate: Certification for clean energy usage and generation.",
+        link: "https://www.cercind.gov.in/",
+        details: ["Eligibility: Clean energy producers.", "Benefits: Certification for clean energy production.", "Documents: Energy production data, system records."]
+      },
+      "conservation certificate": {
+        response: "Conservation Certificate: Certification for conserving natural resources.",
+        link: "https://www.moef.gov.in/",
+        details: ["Eligibility: Conservation projects.", "Benefits: Official recognition for conservation efforts.", "Documents: Conservation plans, project details."]
+      },
+      "environment protection act registration": {
+        response: "Environment Protection Act Registration: Registration for compliance with environmental protection laws.",
+        link: "https://www.moef.gov.in/",
+        details: ["Eligibility: Industrial facilities and projects.", "Benefits: Legal compliance with environmental protection regulations.", "Documents: Facility details, environmental impact assessments."]
+      },
+      "cultural heritage protection certificate": {
+        response: "Cultural Heritage Protection Certificate: Certification for the protection of cultural heritage sites.",
+        link: "https://www.asi.nic.in/",
+        details: ["Eligibility: Heritage site managers.", "Benefits: Official certification for heritage protection.", "Documents: Site details, protection plan."]
+      },
+      "recycling license": {
+        response: "Recycling License: License for recycling operations and facilities.",
+        link: "https://www.mpcb.gov.in/",
+        details: ["Eligibility: Recycling companies.", "Benefits: Legal authorization for recycling operations.", "Documents: Business registration, recycling facility details."]
+      },
+      "hazardous waste disposal certification": {
+        response: "Hazardous Waste Disposal Certification: Certification for the proper disposal of hazardous waste.",
+        link: "https://www.cpcb.nic.in/",
+        details: ["Eligibility: Industries disposing of hazardous waste.", "Benefits: Legal certification for hazardous waste disposal.", "Documents: Waste disposal records, compliance data."]
+      },
+      "plastic waste management license": {
+        response: "Plastic Waste Management License: License for managing plastic waste.",
+        link: "https://www.mpcb.gov.in/",
+        details: ["Eligibility: Plastic manufacturers, recyclers.", "Benefits: Legal authorization for plastic waste management.", "Documents: Waste management plans, environmental compliance."]
+      },
+      "carbon footprint certification": {
+        response: "Carbon Footprint Certification: Certification for measuring and reducing carbon emissions.",
+        link: "https://www.carbonfootprint.com/",
+        details: ["Eligibility: Companies, organizations, and individuals.", "Benefits: Certification for reduced carbon emissions.", "Documents: Emission data, reduction strategies."]
+      },
+      "clean india certificate": {
+        response: "Clean India Certificate (Swachh Bharat Abhiyan): Certification for cleanliness and sanitation efforts.",
+        link: "https://swachhbharatmission.gov.in/",
+        details: ["Eligibility: Municipalities, organizations, and communities.", "Benefits: Official certification for cleanliness and sanitation efforts.", "Documents: Cleanliness initiatives, sanitation reports."]
+      },
+	   // **Miscellaneous Services**
+      "road safety certificate": {
+        response: "Road Safety Certificate: Certification for compliance with road safety regulations.",
+        link: "https://www.morth.gov.in/",
+        details: ["Eligibility: Vehicle owners and operators.", "Benefits: Certification for vehicle and road safety compliance.", "Documents: Vehicle documents, safety inspection report."]
+      },
+      "insurance policy certificate": {
+        response: "Insurance Policy Certificate: Certification for insurance policies.",
+        link: "https://www.irda.gov.in/",
+        details: ["Eligibility: Policyholders.", "Benefits: Proof of insurance coverage.", "Documents: Policy documents, payment receipts."]
+      },
+      "vehicle registration certificate": {
+        response: "Vehicle Registration Certificate: Official document certifying vehicle registration.",
+        link: "https://vahan.nic.in/",
+        details: ["Eligibility: Vehicle owners.", "Benefits: Legal certification of vehicle registration.", "Documents: Vehicle purchase details, ID proof."]
+      },
+      "customs declaration certificate": {
+        response: "Customs Declaration Certificate: Certification for imported/exported goods declaration.",
+        link: "https://www.cbic.gov.in/",
+        details: ["Eligibility: Importers and exporters.", "Benefits: Legal documentation for customs clearance.", "Documents: Invoice, shipping details."]
+      },
+      "employment certificate": {
+        response: "Employment Certificate: Certification of employment status.",
+        link: "https://www.labour.gov.in/",
+        details: ["Eligibility: Employees.", "Benefits: Proof of employment.", "Documents: Employment contract, company letterhead."]
+      },
+      "tax filing acknowledgment": {
+        response: "Tax Filing Acknowledgment: Acknowledgment for filed income tax returns.",
+        link: "https://incometaxindiaefiling.gov.in/",
+        details: ["Eligibility: Taxpayers.", "Benefits: Proof of successful tax filing.", "Documents: Tax return form, acknowledgment receipt."]
+      },
+      "fixed deposit certificate": {
+        response: "Fixed Deposit Certificate: Certificate for fixed deposit account.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Fixed deposit account holders.", "Benefits: Proof of fixed deposit investment.", "Documents: Deposit details, bank acknowledgment."]
+      },
+      "home loan certificate": {
+        response: "Home Loan Certificate: Certification for home loan.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Home loan borrowers.", "Benefits: Proof of home loan taken.", "Documents: Loan agreement, property documents."]
+      },
+      "personal loan certificate": {
+        response: "Personal Loan Certificate: Certification for personal loan.",
+        link: "https://www.icicibank.com/",
+        details: ["Eligibility: Personal loan borrowers.", "Benefits: Proof of personal loan approval.", "Documents: Loan agreement, bank documents."]
+      },
+      "bank account opening certificate": {
+        response: "Bank Account Opening Certificate: Certificate for opening a new bank account.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: New bank account holders.", "Benefits: Proof of bank account opening.", "Documents: Identity proof, address proof."]
+      },
+      "rent agreement": {
+        response: "Rent Agreement: Formal agreement between landlord and tenant.",
+        link: "https://www.indiacode.nic.in/",
+        details: ["Eligibility: Landlord and tenant.", "Benefits: Official agreement for renting property.", "Documents: Property documents, rent details."]
+      },
+      "utility bills": {
+        response: "Utility Bills: Bills for essential services like electricity, water, gas.",
+        link: "https://www.tnebnet.org/",
+        details: ["Eligibility: Utility service users.", "Benefits: Proof of utility payment.", "Documents: Bill receipts, account details."]
+      },
+      "document attestation": {
+        response: "Document Attestation: Process of certifying the authenticity of documents.",
+        link: "https://www.mea.gov.in/",
+        details: ["Eligibility: Individuals requiring document verification.", "Benefits: Validated documents for official use.", "Documents: Original documents, ID proof."]
+      },
+      "police clearance certificate": {
+        response: "Police Clearance Certificate: Certificate issued by police confirming no criminal record.",
+        link: "https://www.police.gov.in/",
+        details: ["Eligibility: Individuals seeking clearance for travel or employment.", "Benefits: Proof of no criminal background.", "Documents: ID proof, application form."]
+      },
+      "duplicate certificate application": {
+        response: "Duplicate Certificate Application: Process to apply for a duplicate certificate.",
+        link: "https://www.indiacode.nic.in/",
+        details: ["Eligibility: Individuals needing a duplicate certificate.", "Benefits: Reissue of lost or damaged certificates.", "Documents: Original certificate details, application form."]
+      },
+      "security clearance certificate": {
+        response: "Security Clearance Certificate: Certificate confirming security clearance for employment or travel.",
+        link: "https://www.mha.gov.in/",
+        details: ["Eligibility: Individuals requiring security clearance.", "Benefits: Proof of security background check.", "Documents: ID proof, clearance application."]
+      },
+      "real estate agreement": {
+        response: "Real Estate Agreement: Formal agreement between buyer and seller of real estate.",
+        link: "https://www.rera.gov.in/",
+        details: ["Eligibility: Property buyers and sellers.", "Benefits: Legal certification of real estate transactions.", "Documents: Property documents, agreement details."]
+      },
+      "international trade license": {
+        response: "International Trade License: License for conducting international trade.",
+        link: "https://dgft.gov.in/",
+        details: ["Eligibility: Importers and exporters.", "Benefits: Legal authorization for international trade.", "Documents: Business registration, trade agreement."]
+      },
+      "export documentation": {
+        response: "Export Documentation: Documents required for exporting goods internationally.",
+        link: "https://dgft.gov.in/",
+        details: ["Eligibility: Exporters.", "Benefits: Documentation for smooth export transactions.", "Documents: Invoice, export declaration."]
+      },
+      "import documentation": {
+        response: "Import Documentation: Documents required for importing goods.",
+        link: "https://dgft.gov.in/",
+        details: ["Eligibility: Importers.", "Benefits: Official import documents for clearance.", "Documents: Invoice, import declaration."]
+      },
+      "employee provident fund": {
+        response: "Employee Provident Fund (EPF): Social security for employees with a contribution to savings.",
+        link: "https://www.epfindia.gov.in/",
+        details: ["Eligibility: Employees working in an establishment covered by EPF.", "Benefits: Retirement savings, withdrawal of funds.", "Documents: EPF account number, employer details."]
+      },
+      "gratuity certificate": {
+        response: "Gratuity Certificate: Certification for gratuity payments to employees.",
+        link: "https://www.epfindia.gov.in/",
+        details: ["Eligibility: Employees completing a certain number of years in service.", "Benefits: Gratuity payment upon retirement or termination.", "Documents: Employment records."]
+      },
+      "seafarer certification": {
+        response: "Seafarer Certification: Certification for seafarers for employment in maritime industries.",
+        link: "https://www.dgshipping.gov.in/",
+        details: ["Eligibility: Seafarers.", "Benefits: Certification for employment on ships.", "Documents: Seafarer training completion certificate."]
+      },
+      "public service commission registration": {
+        response: "Public Service Commission Registration: Registration for various state and central government exams.",
+        link: "https://www.upsc.gov.in/",
+        details: ["Eligibility: Candidates applying for government exams.", "Benefits: Registration for upcoming competitive exams.", "Documents: Educational qualifications, ID proof."]
+      },
+      "military service record": {
+        response: "Military Service Record: Official record of military service.",
+        link: "https://indianarmy.nic.in/",
+        details: ["Eligibility: Ex-servicemen and active-duty military personnel.", "Benefits: Proof of military service for pension or benefits.", "Documents: Service details, discharge certificate."]
+      },
+	   // **Government of Tamil Nadu Documents & Services**
+      "patta chitta": {
+        response: "Patta Chitta (Land Ownership Document): Legal document proving land ownership in Tamil Nadu.",
+        link: "https://www.tnreginet.gov.in/",
+        details: ["Eligibility: Landowners in Tamil Nadu.", "Benefits: Proof of land ownership.", "Documents: Aadhar, land details."]
+      },
+      "community certificate": {
+        response: "Community Certificate (Caste Certificate): Official certificate for caste identification.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Residents of Tamil Nadu.", "Benefits: Identification of caste for government benefits.", "Documents: Caste details, Aadhar."]
+      },
+      "income certificate": {
+        response: "Income Certificate: Certification of annual income for various purposes.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Residents of Tamil Nadu.", "Benefits: Proof of income for subsidies and scholarships.", "Documents: Income details, Aadhar."]
+      },
+      "domicile certificate": {
+        response: "Domicile Certificate: Certification of residence in Tamil Nadu.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Residents of Tamil Nadu.", "Benefits: Proof of residence for state-specific benefits.", "Documents: Address proof, Aadhar."]
+      },
+      "family ration card": {
+        response: "Family Ration Card: Official card for subsidized food distribution.",
+        link: "https://www.tnpds.gov.in/",
+        details: ["Eligibility: Low-income families in Tamil Nadu.", "Benefits: Subsidized food grains.", "Documents: Family details, income proof."]
+      },
+      "legal heir certificate": {
+        response: "Legal Heir Certificate: Certificate for identifying legal heirs after someone's death.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Legal heirs of deceased persons.", "Benefits: Proof of legal heir status for property transfer.", "Documents: Death certificate, family details."]
+      },
+      "birth certificate": {
+        response: "Birth Certificate: Official certificate proving the birth of an individual.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Individuals born in Tamil Nadu.", "Benefits: Proof of birth for legal purposes.", "Documents: Hospital records, parent details."]
+      },
+      "death certificate": {
+        response: "Death Certificate: Official document certifying the death of an individual.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: For deceased persons.", "Benefits: Proof of death for legal purposes.", "Documents: Hospital records, family details."]
+      },
+      "marriage certificate": {
+        response: "Marriage Certificate: Official certificate for a legally recognized marriage.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Married couples in Tamil Nadu.", "Benefits: Proof of marriage for legal purposes.", "Documents: Marriage details, Aadhar."]
+      },
+      "voter id": {
+        response: "Voter ID: Official identification for voters in Tamil Nadu.",
+        link: "https://voters.eci.gov.in/",
+        details: ["Eligibility: Eligible voters in Tamil Nadu.", "Benefits: Eligibility to vote in elections.", "Documents: Address proof, age proof."]
+      },
+      "driving license": {
+        response: "Driving License: Official certification for driving vehicles in Tamil Nadu.",
+        link: "https://www.tnsta.gov.in/",
+        details: ["Eligibility: Residents of Tamil Nadu above the legal driving age.", "Benefits: Legal authority to drive.", "Documents: Age proof, vehicle details."]
+      },
+      "educational certificates": {
+        response: "Educational Certificates: Certificates proving educational qualifications.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Students completing their studies in Tamil Nadu.", "Benefits: Recognition for educational qualifications.", "Documents: Mark sheets, degree details."]
+      },
+      "water connection certificate": {
+        response: "Water Connection Certificate: Certification for water supply connection.",
+        link: "https://www.twadboard.gov.in/",
+        details: ["Eligibility: Residents applying for a water connection.", "Benefits: Legal water connection certification.", "Documents: Property documents, address proof."]
+      },
+      "electricity connection certificate": {
+        response: "Electricity Connection Certificate: Certification for electricity supply connection.",
+        link: "https://www.tnebnet.org/",
+        details: ["Eligibility: Residents applying for electricity connection.", "Benefits: Legal electricity connection certification.", "Documents: Property documents, Aadhar."]
+      },
+      "property tax receipt": {
+        response: "Property Tax Receipt: Receipt for property tax payments in Tamil Nadu.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Property owners in Tamil Nadu.", "Benefits: Proof of property tax payment.", "Documents: Property documents, payment receipt."]
+      },
+      "tax filing acknowledgment": {
+        response: "Tax Filing Acknowledgment: Acknowledgment for filed income tax returns.",
+        link: "https://www.incometaxindiaefiling.gov.in/",
+        details: ["Eligibility: Taxpayers in Tamil Nadu.", "Benefits: Proof of filed tax returns.", "Documents: Tax return form, acknowledgment receipt."]
+      },
+      "slum rehabilitation certificate": {
+        response: "Slum Rehabilitation Certificate: Certification for slum redevelopment projects.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Residents of slums in Tamil Nadu.", "Benefits: Proof of slum rehabilitation efforts.", "Documents: Proof of residence, redevelopment plan."]
+      },
+      "rural development certificate": {
+        response: "Rural Development Certificate: Certification for rural development schemes.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Rural communities in Tamil Nadu.", "Benefits: Recognition for rural development projects.", "Documents: Community records, development plans."]
+      },
+      "farmer welfare scheme certificate": {
+        response: "Farmer Welfare Scheme Certificate: Certification for farmers availing government welfare schemes.",
+        link: "https://www.agri.tn.gov.in/",
+        details: ["Eligibility: Farmers in Tamil Nadu.", "Benefits: Subsidies, loans, and support for farmers.", "Documents: Farm records, Aadhar."]
+      },
+      "pmay tamil nadu application": {
+        response: "PMAY (Tamil Nadu) Application: Application for affordable housing under PMAY.",
+        link: "https://pmaymis.gov.in/",
+        details: ["Eligibility: EWS, LIG, MIG, and Urban Poor in Tamil Nadu.", "Benefits: Subsidy for constructing or purchasing houses.", "Documents: Proof of income, Aadhar."]
+      },
+      "pm fasal bima yojana tamil nadu": {
+        response: "PM Fasal Bima Yojana (Tamil Nadu): Crop insurance for farmers in Tamil Nadu.",
+        link: "https://pmfby.gov.in/",
+        details: ["Eligibility: Farmers in Tamil Nadu.", "Benefits: Crop insurance coverage.", "Documents: Landholding details, crop details."]
+      },
+      "tn government employees pension certificate": {
+        response: "Tamil Nadu Government Employees Pension Certificate: Pension certificate for state government employees.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Tamil Nadu state government employees.", "Benefits: Pension payments after retirement.", "Documents: Employee ID, pension details."]
+      },
+      "tnstc bus pass": {
+        response: "TNSTC Bus Pass: Bus pass for Tamil Nadu State Transport Corporation services.",
+        link: "https://www.tnstc.in/",
+        details: ["Eligibility: Students, senior citizens, and regular travelers.", "Benefits: Discounted travel on TNSTC buses.", "Documents: Aadhar, travel details."]
+      },
+      "cm relief fund application": {
+        response: "CM Relief Fund Application: Application for relief under the Chief Minister's Relief Fund.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Individuals affected by natural calamities.", "Benefits: Financial assistance.", "Documents: Proof of loss, Aadhar."]
+      },
+      "tnpsc exam certificate": {
+        response: "TNPSC Exam Certificate: Certification for candidates appearing for Tamil Nadu Public Service Commission exams.",
+        link: "https://www.tnpsc.gov.in/",
+        details: ["Eligibility: TNPSC exam candidates.", "Benefits: Proof of exam qualification.", "Documents: Exam details, ID proof."]
+      },
+      "tn housing scheme certification": {
+        response: "TN Housing Scheme Certification: Certification for housing schemes in Tamil Nadu.",
+        link: "https://www.tnhb.gov.in/",
+        details: ["Eligibility: Applicants of Tamil Nadu Housing Schemes.", "Benefits: Official recognition for housing assistance.", "Documents: Application form, income proof."]
+      },
+      "food safety certificate": {
+        response: "Food Safety Certificate: Certification for food establishments ensuring safety standards.",
+        link: "https://www.fssai.gov.in/",
+        details: ["Eligibility: Food businesses in Tamil Nadu.", "Benefits: Certification for food safety compliance.", "Documents: Business registration, food safety training."]
+      },
+      "ayushman bharat registration tamil nadu": {
+        response: "Ayushman Bharat Registration (Tamil Nadu): Registration for Ayushman Bharat health scheme in Tamil Nadu.",
+        link: "https://www.pmjay.gov.in/",
+        details: ["Eligibility: Low-income families in Tamil Nadu.", "Benefits: Health insurance coverage up to ₹5 lakh.", "Documents: Family details, Aadhar."]
+      },
+      "health wellness center registration": {
+        response: "Health & Wellness Center Registration: Registration for health and wellness centers in Tamil Nadu.",
+        link: "https://nhm.gov.in/",
+        details: ["Eligibility: Health service providers in Tamil Nadu.", "Benefits: Certification for health centers.", "Documents: Facility details, registration."]
+      },
+      "cattle rearing certificate": {
+        response: "Cattle Rearing Certificate: Certification for cattle farming activities.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Cattle farmers.", "Benefits: Official recognition for cattle farming.", "Documents: Farm details, livestock records."]
+      },
+      "agricultural subsidy certificate": {
+        response: "Agricultural Subsidy Certificate: Certification for agricultural subsidies.",
+        link: "https://www.agri.tn.gov.in/",
+        details: ["Eligibility: Farmers in Tamil Nadu.", "Benefits: Subsidies for farming activities.", "Documents: Farm records, application form."]
+      },
+      "water harvesting certificate": {
+        response: "Water Harvesting Certificate: Certification for water conservation systems.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Farmers and communities implementing water harvesting systems.", "Benefits: Official recognition for water conservation.", "Documents: Project details."]
+      },
+      "soil health card tamil nadu": {
+        response: "Soil Health Card (Tamil Nadu): Certificate for soil quality and fertility.",
+        link: "https://www.soilhealth.dac.gov.in/",
+        details: ["Eligibility: Farmers in Tamil Nadu.", "Benefits: Soil health information to improve crop yield.", "Documents: Landholding details."]
+      },
+      "tamil nadu tourism registration certificate": {
+        response: "Tamil Nadu Tourism Registration Certificate: Certification for tourism businesses in Tamil Nadu.",
+        link: "https://www.tntourism.org/",
+        details: ["Eligibility: Tourism service providers.", "Benefits: Official recognition for tourism services.", "Documents: Business registration."]
+      },
+      "tamil nadu urban development authority certificate": {
+        response: "Tamil Nadu Urban Development Authority (TUDA) Certificate: Certification for urban development projects.",
+        link: "https://www.tuda.in/",
+        details: ["Eligibility: Developers in Tamil Nadu.", "Benefits: Official certification for urban development projects.", "Documents: Project details."]
+      },
+      "public distribution system registration": {
+        response: "Public Distribution System (PDS) Registration: Registration for PDS services in Tamil Nadu.",
+        link: "https://www.tnpds.gov.in/",
+        details: ["Eligibility: Households in Tamil Nadu.", "Benefits: Access to subsidized food items.", "Documents: Family details, Aadhar."]
+      },
+      "employee welfare scheme registration": {
+        response: "Employee Welfare Scheme Registration: Registration for employee welfare schemes in Tamil Nadu.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Employees working in Tamil Nadu.", "Benefits: Access to employee welfare programs.", "Documents: Employee details, employer information."]
+      },
+      "women empowerment certificate": {
+        response: "Women Empowerment Certificate: Certification for women empowerment programs.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Women participating in empowerment programs.", "Benefits: Official recognition for empowerment efforts.", "Documents: Program participation records."]
+      },
+      "widow pension scheme tamil nadu": {
+        response: "Widow Pension Scheme (Tamil Nadu): Pension for widows in Tamil Nadu.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Widows in Tamil Nadu.", "Benefits: Monthly pension for widows.", "Documents: Widow status, income proof."]
+      },
+      "handicapped welfare scheme registration": {
+        response: "Handicapped Welfare Scheme Registration: Registration for welfare schemes for handicapped individuals.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Disabled individuals in Tamil Nadu.", "Benefits: Financial assistance and welfare support.", "Documents: Disability certificate, Aadhar."]
+      },
+	   // **Employee Welfare Schemes**
+      "employee provident fund": {
+        response: "Employee Provident Fund (EPF): A retirement benefit scheme for employees.",
+        link: "https://www.epfindia.gov.in/",
+        details: ["Eligibility: Employees working in an establishment covered by EPF.", "Benefits: Retirement savings, withdrawal of funds.", "Documents: EPF account number, employer details."]
+      },
+      "gratuity certificate": {
+        response: "Gratuity Certificate: Certification for gratuity payments to employees after retirement.",
+        link: "https://www.epfindia.gov.in/",
+        details: ["Eligibility: Employees completing a certain number of years in service.", "Benefits: Gratuity payment upon retirement or termination.", "Documents: Employment records."]
+      },
+      "employee welfare scheme registration": {
+        response: "Employee Welfare Scheme Registration: Registration for employee welfare schemes in Tamil Nadu.",
+        link: "https://www.tn.gov.in/",
+        details: ["Eligibility: Employees working in Tamil Nadu.", "Benefits: Access to various welfare programs and benefits.", "Documents: Employee details, employer information."]
+      },
+	  // **Bank Account Opening Services**
+      "savings account": {
+        response: "Savings Account: A basic account for saving money and earning interest.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Any individual above the legal age.", "Benefits: Interest on savings, easy access to funds.", "Documents: Identity proof, address proof, PAN card."]
+      },
+      "current account": {
+        response: "Current Account: A non-interest-bearing account designed for business transactions.",
+        link: "https://www.icicibank.com/",
+        details: ["Eligibility: Business owners, companies.", "Benefits: Unlimited transactions, overdraft facility.", "Documents: Business registration, address proof, PAN card."]
+      },
+      "fixed deposit account": {
+        response: "Fixed Deposit Account: A deposit account where money is kept for a fixed tenure and earns a fixed interest.",
+        link: "https://www.hdfcbank.com/",
+        details: ["Eligibility: Any individual, business entity.", "Benefits: Higher interest rates compared to savings accounts.", "Documents: Identity proof, address proof, PAN card."]
+      },
+      "jan dhan yojana account": {
+        response: "Pradhan Mantri Jan Dhan Yojana (PMJDY) Account: Government-backed financial inclusion scheme for low-income families.",
+        link: "https://pmjdy.gov.in/",
+        details: ["Eligibility: Indian citizens, especially from low-income groups.", "Benefits: Zero balance account, government schemes for account holders.", "Documents: Identity proof, address proof."]
+      },
+      "nri account": {
+        response: "NRI Account: Special bank accounts for Non-Resident Indians (NRIs) to manage their income and investments.",
+        link: "https://www.sbi.co.in/",
+        details: ["Eligibility: Non-Resident Indians.", "Benefits: Tax benefits, repatriation of funds to India.", "Documents: Passport, visa details, address proof."]
+      },
+      "minor account": {
+        response: "Minor Account: A bank account for children below the legal age, managed by parents or guardians.",
+        link: "https://www.icicibank.com/",
+        details: ["Eligibility: Children below the legal age, managed by parents/guardians.", "Benefits: Teach children financial literacy, secure savings.", "Documents: Birth certificate, guardian's ID proof."]
+      },
+      // Add 100+ services following same pattern
+    };
+
+    function sendMessage() {
+      const userInput = document.getElementById("userInput").value.toLowerCase();
+      if (!userInput) return;
+
+      const chatlogs = document.getElementById("chatlogs");
+      
+      // User message
+      const userDiv = document.createElement("div");
+      userDiv.className = "message user";
+      userDiv.textContent = `You: ${userInput}`;
+      chatlogs.appendChild(userDiv);
+
+      document.getElementById("userInput").value = "";
+
+      // Bot response
+      setTimeout(() => {
+        const botDiv = document.createElement("div");
+        botDiv.className = "message bot";
+
+        let responseText = "Service not found. Try: 'pension scheme', 'scholarship apply', or 'pm fasal bima'";
+        let serviceLink = "#";
+        let details = [];
+
+        if (services[userInput]) {
+          responseText = services[userInput].response;
+          serviceLink = services[userInput].link;
+          details = services[userInput].details || [];
+        }
+
+        botDiv.innerHTML = `
+          <strong>Bot: ${responseText}</strong>
+          ${details.map(d => `<div class="detail">✓ ${d}</div>`).join('')}
+          <a href="${serviceLink}" target="_blank" style="display: block; margin-top: 10px;">
+            🔗 Official Portal
+          </a>
+        `;
+
+        chatlogs.appendChild(botDiv);
+        chatlogs.scrollTop = chatlogs.scrollHeight;
+      }, 500);
+    }
+
+    // Rest of the JavaScript remains same
+    function showSuggestions(input) {
+      const suggestions = Object.keys(services).filter(key => 
+        key.includes(input.toLowerCase())
+      );
+      const suggestionsDiv = document.getElementById("suggestions");
+      suggestionsDiv.innerHTML = "";
+
+      suggestions.forEach(suggestion => {
+        const div = document.createElement("div");
+        div.className = "suggestion";
+        div.textContent = suggestion;
+        div.onclick = () => {
+          document.getElementById("userInput").value = suggestion;
+          suggestionsDiv.innerHTML = "";
+        };
+        suggestionsDiv.appendChild(div);
+      });
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", sendMessage);
+    document.getElementById("userInput").addEventListener("input", (e) => {
+      showSuggestions(e.target.value);
+    });
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      document.getElementById("chatlogs").innerHTML = "";
+    });
+  </script>
+</body>
+</html>

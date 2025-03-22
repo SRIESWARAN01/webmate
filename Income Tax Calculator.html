@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tax Calculator</title>
+	<style>
+    	/* Full-screen styling */
+    	html, body {
+        	height: 100%;
+        	margin: 0;
+        	padding: 0;
+        	font-family: Arial, sans-serif;
+        	background: #f4f4f4;
+        	display: flex;
+        	justify-content: center;
+        	align-items: center;
+    	}
+    	.container {
+        	background: #fff;
+        	padding: 40px;
+        	border-radius: 10px;
+        	box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        	text-align: center;
+        	max-width: 500px;
+        	width: 100%;
+    	}
+    	h1 {
+        	color: #28a745;
+        	margin-bottom: 20px;
+        	font-size: 2.5rem;
+    	}
+    	label {
+        	font-weight: bold;
+        	display: block;
+        	margin-bottom: 10px;
+        	font-size: 1.2rem;
+    	}
+    	input {
+        	width: 100%;
+        	padding: 15px;
+        	margin-bottom: 20px;
+        	border: 1px solid #ccc;
+        	border-radius: 5px;
+        	font-size: 1rem;
+    	}
+    	button {
+        	width: 100%;
+        	padding: 15px;
+        	background: #28a745;
+        	color: #fff;
+        	border: none;
+        	border-radius: 5px;
+        	font-size: 1.2rem;
+        	cursor: pointer;
+    	}
+    	button:hover {
+        	background: #218838;
+    	}
+    	.result {
+        	margin-top: 20px;
+        	padding: 20px;
+        	background: #e9ecef;
+        	border-radius: 5px;
+        	font-size: 1.5rem;
+        	font-weight: bold;
+    	}
+	</style>
+</head>
+<body>
+
+	<div class="container">
+    	<h1>Tax Calculator</h1>
+    	<form onsubmit="calculateTax(event)">
+        	<label for="income">Enter Income (in rupees):</label>
+        	<input type="number" id="income" placeholder="Enter income in rupees" required>
+        	<button type="submit">Calculate Tax</button>
+    	</form>
+    	<div class="result" id="taxResult"></div>
+	</div>
+
+	<script>
+    	function calculateTax(event) {
+        	event.preventDefault();
+        	const income = parseFloat(document.getElementById('income').value);
+
+        	// Convert income from rupees to lakhs for calculation
+        	const incomeInLakhs = income / 100000;
+        	let tax = 0;
+
+        	if (incomeInLakhs <= 4) {
+            	tax = 0;
+        	} else if (incomeInLakhs > 4 && incomeInLakhs <= 8) {
+            	tax = (incomeInLakhs - 4) * 0.05;
+        	} else if (incomeInLakhs > 8 && incomeInLakhs <= 12) {
+            	tax = (4 * 0.05) + ((incomeInLakhs - 8) * 0.10);
+        	} else if (incomeInLakhs > 12 && incomeInLakhs <= 16) {
+            	tax = (4 * 0.05) + (4 * 0.10) + ((incomeInLakhs - 12) * 0.15);
+        	} else if (incomeInLakhs > 16 && incomeInLakhs <= 20) {
+            	tax = (4 * 0.05) + (4 * 0.10) + (4 * 0.15) + ((incomeInLakhs - 16) * 0.20);
+        	} else if (incomeInLakhs > 20 && incomeInLakhs <= 24) {
+            	tax = (4 * 0.05) + (4 * 0.10) + (4 * 0.15) + (4 * 0.20) + ((incomeInLakhs - 20) * 0.25);
+        	} else {
+            	tax = (4 * 0.05) + (4 * 0.10) + (4 * 0.15) + (4 * 0.20) + (4 * 0.25) + ((incomeInLakhs - 24) * 0.30);
+        	}
+
+        	// Convert tax from lakhs to rupees
+        	const taxInRupees = tax * 100000;
+
+        	// Display the result
+        	document.getElementById('taxResult').innerText = `Tax: ₹${taxInRupees.toLocaleString()}`;
+    	}
+	</script>
+
+</body>
+</html>

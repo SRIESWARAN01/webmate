@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sastha Cement Pipes and Tiles - Billing System</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .shop-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .shop-info h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #333;
+        }
+
+        .shop-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input, select, button {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .total-section {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        #invoice {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Shop Information -->
+        <div class="shop-info">
+            <h1>Sastha Cement Pipes and Tiles</h1>
+            <p>Solavandan, Madurai</p>
+        </div>
+
+        <h2>Billing System</h2>
+        
+        <!-- Input Fields -->
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="Item name">
+            <input type="number" id="itemPrice" placeholder="Price" step="0.01">
+            <input type="number" id="itemQuantity" placeholder="Quantity" value="1">
+            <button onclick="addItem()">Add Item</button>
+        </div>
+
+        <!-- Bill Table -->
+        <table id="billTable">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="billBody">
+            </tbody>
+        </table>
+
+        <!-- Total Section -->
+        <div class="total-section">
+            <p>Subtotal: ₹<span id="subtotal">0.00</span></p>
+            <p>Tax (%): <input type="number" id="tax" value="0" step="0.1" onchange="calculateTotal()"></p>
+            <p>Discount (%): <input type="number" id="discount" value="0" step="0.1" onchange="calculateTotal()"></p>
+            <p>Total: ₹<span id="total">0.00</span></p>
+            <button onclick="generateInvoice()">Generate Invoice</button>
+        </div>
+
+        <!-- Invoice Section -->
+        <div id="invoice">
+            <h3>Invoice</h3>
+            <div id="invoiceContent"></div>
+            <button onclick="printInvoice()">Print Invoice</button>
+            <button onclick="closeInvoice()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let items = [];
+
+        function addItem() {
+            const itemName = document.getElementById('itemName').value;
+            const itemPrice = parseFloat(document.getElementById('itemPrice').value);
+            const itemQuantity = parseInt(document.getElementById('itemQuantity').value);
+
+            if (!itemName || isNaN(itemPrice) || isNaN(itemQuantity)) {
+                alert('Please fill all fields correctly');
+                return;
+            }
+
+            const item = {
+                name: itemName,
+                price: itemPrice,
+                quantity: itemQuantity,
+                total: itemPrice * itemQuantity
+            };
+
+            items.push(item);
+            updateTable();
+            calculateTotal();
+            clearInputs();
+        }
+
+        function updateTable() {
+            const tbody = document.getElementById('billBody');
+            tbody.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                const row = `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>₹${item.price.toFixed(2)}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.total.toFixed(2)}</td>
+                        <td><button onclick="removeItem(${index})">Remove</button></td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            updateTable();
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const subtotal = items.reduce((acc, item) => acc + item.total, 0);
+            const tax = parseFloat(document.getElementById('tax').value) || 0;
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+
+            const taxAmount = (subtotal * tax) / 100;
+            const discountAmount = (subtotal * discount) / 100;
+            const total = subtotal + taxAmount - discountAmount;
+
+            document.getElementById('subtotal').textContent = subtotal.toFixed(2);
+            document.getElementById('total').textContent = total.toFixed(2);
+        }
+
+        function generateInvoice() {
+            const invoiceContent = document.getElementById('invoiceContent');
+            const invoiceDate = new Date().toLocaleString();
+            
+            let invoiceHTML = `
+                <div class="shop-info">
+                    <h1>Sastha Cement Pipes and Tiles</h1>
+                    <p>Solavandan, Madurai</p>
+                </div>
+                <p>Date: ${invoiceDate}</p>
+                <table border="1">
+                    <tr>
+                        <th>Item</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+            `;
+
+            items.forEach(item => {
+                invoiceHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>₹${item.price.toFixed(2)}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.total.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            invoiceHTML += `
+                </table>
+                <p>Subtotal: ₹${document.getElementById('subtotal').textContent}</p>
+                <p>Tax: ${document.getElementById('tax').value}%</p>
+                <p>Discount: ${document.getElementById('discount').value}%</p>
+                <p>Total: ₹${document.getElementById('total').textContent}</p>
+            `;
+
+            invoiceContent.innerHTML = invoiceHTML;
+            document.getElementById('invoice').style.display = 'block';
+        }
+
+        function printInvoice() {
+            window.print();
+        }
+
+        function closeInvoice() {
+            document.getElementById('invoice').style.display = 'none';
+        }
+
+        function clearInputs() {
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemPrice').value = '';
+            document.getElementById('itemQuantity').value = '1';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Parent ID Card System with QR Code</title>
+  <!-- html2canvas for screenshot download -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <!-- QRCode.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      margin: 20px;
+      color: #333;
+    }
+    header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    header a {
+      margin: 0 15px;
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+      font-size: 18px;
+      transition: color 0.3s ease;
+    }
+    header a:hover {
+      color: #0056b3;
+    }
+    section {
+      display: none;
+      max-width: 900px;
+      margin: auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    section.active {
+      display: block;
+    }
+    form input, form textarea, form select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    form label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .card-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .card {
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      width: 300px;
+      text-align: center;
+      margin-bottom: 20px;
+      background-color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    /* Background overlay for the card */
+    .bg-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0.3;
+      z-index: 0;
+      pointer-events: none;
+    }
+    /* Ensure content is above the overlay */
+    .card .content {
+      position: relative;
+      z-index: 1;
+    }
+    .college-name {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-align: center;
+      color: #444;
+    }
+    .card img {
+      max-width: 100px; /* mini passport size */
+      height: auto;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    #qrCodeContainer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    button {
+      padding: 10px 16px;
+      margin: 10px 0;
+      cursor: pointer;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    @media (max-width: 600px) {
+      .card-container {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a id="linkForm">Registration</a>
+    <a id="linkAdmin">Admin</a>
+  </header>
+  
+  <!-- Registration / ID Card Preview Section -->
+  <section id="formSection" class="active">
+    <h2 style="text-align:center;">Student ID Card Registration</h2>
+    <form id="idForm">
+      <label>Student Name:</label>
+      <input type="text" id="studentName" required>
+
+      <label>Parent Name:</label>
+      <input type="text" id="parentName" required>
+
+      <label>Parent Photo:</label>
+      <input type="file" id="parentPhoto" accept="image/*" required>
+
+      <label>Background Image (optional):</label>
+      <input type="file" id="bgImage" accept="image/*">
+
+      <label>Address:</label>
+      <textarea id="address" required></textarea>
+
+      <label>Roll Number:</label>
+      <input type="text" id="rollNo" required>
+
+      <label>Department:</label>
+      <input type="text" id="department" required>
+
+      <label>Date of Birth:</label>
+      <input type="date" id="dob" required>
+
+      <label>Mobile Number:</label>
+      <input type="text" id="mobile" required>
+      
+      <label>Aadhar Number:</label>
+      <input type="text" id="aadhar" required>
+
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="previewSection" style="display:none;">
+      <h3 style="text-align:center;">ID Card Preview</h3>
+      <div id="idCard" class="card-container">
+        <!-- Front Side -->
+        <div class="card front" id="frontCard">
+          <div class="bg-overlay" id="frontBg"></div>
+          <div class="content">
+            <div class="college-name">Vivekananda College, Madurai</div>
+            <img id="previewPhoto" src="" alt="Parent Photo">
+            <p><strong>Student Name:</strong> <span id="previewName"></span></p>
+            <p><strong>Parent Name:</strong> <span id="previewParentName"></span></p>
+            <p><strong>Roll No:</strong> <span id="previewRoll"></span></p>
+            <p><strong>Department:</strong> <span id="previewDept"></span></p>
+            <p><strong>DOB:</strong> <span id="previewDOB"></span></p>
+          </div>
+        </div>
+        <!-- Back Side with QR Code -->
+        <div class="card back" id="backCard">
+          <div class="bg-overlay" id="backBg"></div>
+          <div class="content">
+            <p><strong>Address:</strong></p>
+            <p id="previewAddress"></p>
+            <p><strong>Mobile:</strong> <span id="previewMobile"></span></p>
+            <p><strong>Aadhar:</strong> <span id="previewAadhar"></span></p>
+            <div id="qrCodeContainer"></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <button id="downloadBtn">Download ID Card as Image</button>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Admin Section -->
+  <section id="adminSection">
+    <h2 style="text-align:center;">Admin - View Saved Records</h2>
+    <table id="recordsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Student Name</th>
+          <th>Parent Name</th>
+          <th>Photo</th>
+          <th>Address</th>
+          <th>Roll No</th>
+          <th>Department</th>
+          <th>DOB</th>
+          <th>Mobile</th>
+          <th>Aadhar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Records will be populated here -->
+      </tbody>
+    </table>
+    <div style="text-align:center;">
+      <button id="downloadCSV">Download CSV</button>
+    </div>
+  </section>
+  
+  <script>
+    // Navigation between sections
+    document.getElementById('linkForm').addEventListener('click', function() {
+      document.getElementById('formSection').classList.add('active');
+      document.getElementById('adminSection').classList.remove('active');
+    });
+    document.getElementById('linkAdmin').addEventListener('click', function() {
+      document.getElementById('adminSection').classList.add('active');
+      document.getElementById('formSection').classList.remove('active');
+      populateTable();
+    });
+    
+    // Function to get stored records from localStorage
+    function getRecords() {
+      const records = localStorage.getItem('idRecords');
+      return records ? JSON.parse(records) : [];
+    }
+    
+    // Function to save a new record to localStorage
+    function saveRecord(record) {
+      const records = getRecords();
+      record.id = records.length + 1;
+      records.push(record);
+      localStorage.setItem('idRecords', JSON.stringify(records));
+    }
+    
+    // Function to read a file as a Data URL (base64)
+    function readFileAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        if (!file) {
+          resolve(null);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function() {
+          resolve(reader.result);
+        }
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    // Form submission event
+    document.getElementById('idForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      // Read form values
+      const studentName = document.getElementById('studentName').value;
+      const parentName = document.getElementById('parentName').value;
+      const address = document.getElementById('address').value;
+      const rollNo = document.getElementById('rollNo').value;
+      const department = document.getElementById('department').value;
+      const dob = document.getElementById('dob').value;
+      const mobile = document.getElementById('mobile').value;
+      const aadhar = document.getElementById('aadhar').value;
+      
+      const photoInput = document.getElementById('parentPhoto').files[0];
+      const bgInput = document.getElementById('bgImage').files[0];
+      
+      // Read both images
+      const photoData = await readFileAsDataURL(photoInput);
+      const bgData = await readFileAsDataURL(bgInput);
+      
+      // Create record object
+      const record = {
+        studentName,
+        parentName,
+        address,
+        rollNo,
+        department,
+        dob,
+        mobile,
+        aadhar,
+        photoData,
+        bgData
+      };
+      
+      // Save record in localStorage
+      saveRecord(record);
+      // Show preview
+      showPreview(record);
+    });
+    
+    // Function to display preview of the ID card
+    function showPreview(record) {
+      document.getElementById('previewPhoto').src = record.photoData;
+      document.getElementById('previewName').textContent = record.studentName;
+      document.getElementById('previewParentName').textContent = record.parentName;
+      document.getElementById('previewRoll').textContent = record.rollNo;
+      document.getElementById('previewDept').textContent = record.department;
+      document.getElementById('previewDOB').textContent = record.dob;
+      
+      // Set details on back card
+      document.getElementById('previewAddress').textContent = record.address;
+      document.getElementById('previewMobile').textContent = record.mobile;
+      document.getElementById('previewAadhar').textContent = record.aadhar;
+      
+      // If background image is provided, apply it as an overlay for each card
+      if (record.bgData) {
+        document.getElementById('frontBg').style.backgroundImage = `url(${record.bgData})`;
+        document.getElementById('backBg').style.backgroundImage = `url(${record.bgData})`;
+      } else {
+        document.getElementById('frontBg').style.backgroundImage = '';
+        document.getElementById('backBg').style.backgroundImage = '';
+      }
+      
+      // Generate QR code based on the Roll Number and center it
+      const qrContainer = document.getElementById('qrCodeContainer');
+      qrContainer.innerHTML = ""; // Clear previous QR code if any
+      new QRCode(qrContainer, {
+        text: record.rollNo,
+        width: 100,
+        height: 100
+      });
+      
+      document.getElementById('previewSection').style.display = 'block';
+    }
+    
+    // Download ID card as image using html2canvas
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+      html2canvas(document.getElementById('idCard')).then(function(canvas) {
+        const link = document.createElement('a');
+        link.download = 'id_card.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    });
+    
+    // Populate Admin Table with records from localStorage
+    function populateTable() {
+      const tbody = document.querySelector('#recordsTable tbody');
+      tbody.innerHTML = "";
+      const records = getRecords();
+      records.forEach(record => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${record.id}</td>
+          <td>${record.studentName}</td>
+          <td>${record.parentName}</td>
+          <td><img src="${record.photoData}" width="50"></td>
+          <td>${record.address}</td>
+          <td>${record.rollNo}</td>
+          <td>${record.department}</td>
+          <td>${record.dob}</td>
+          <td>${record.mobile}</td>
+          <td>${record.aadhar}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    
+    // Download CSV of all records
+    document.getElementById('downloadCSV').addEventListener('click', function() {
+      const records = getRecords();
+      if (records.length === 0) {
+        alert("No records to download.");
+        return;
+      }
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "ID,Student Name,Parent Name,Address,Roll No,Department,DOB,Mobile,Aadhar\n";
+      records.forEach(record => {
+        const row = [
+          record.id,
+          `"${record.studentName}"`,
+          `"${record.parentName}"`,
+          `"${record.address}"`,
+          record.rollNo,
+          record.department,
+          record.dob,
+          record.mobile,
+          record.aadhar
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "idcards.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  </script>
+</body>
+</html>

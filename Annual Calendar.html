@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Annual Calendar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f5ff;
+            padding: 20px;
+        }
+
+        .calendar-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .month-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .month-header {
+            padding: 15px;
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+        }
+
+        .calendar-table {
+            width: 100%;
+            border-collapse: collapse;
+            padding: 10px;
+        }
+
+        .calendar-table th {
+            padding: 10px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .calendar-table td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+            position: relative;
+        }
+
+        .calendar-table td:hover {
+            background: #f8f9fa;
+            cursor: pointer;
+        }
+
+        .today {
+            background: #ffeb3b !important;
+            font-weight: bold;
+            border-radius: 50%;
+        }
+
+        /* Color Themes for Months */
+        .jan .month-header { background: #e74c3c; }
+        .feb .month-header { background: #9b59b6; }
+        .mar .month-header { background: #3498db; }
+        .apr .month-header { background: #2ecc71; }
+        .may .month-header { background: #f1c40f; }
+        .jun .month-header { background: #e67e22; }
+        .jul .month-header { background: #e74c3c; }
+        .aug .month-header { background: #9b59b6; }
+        .sep .month-header { background: #3498db; }
+        .oct .month-header { background: #2ecc71; }
+        .nov .month-header { background: #f1c40f; }
+        .dec .month-header { background: #e67e22; }
+
+        .year-controls {
+            text-align: center;
+            margin: 20px;
+        }
+
+        #yearInput {
+            padding: 10px;
+            font-size: 1.2em;
+            width: 120px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="year-controls">
+        <input type="number" id="yearInput" value="2023" min="1900" max="2100">
+    </div>
+    
+    <div class="calendar-container" id="calendarContainer"></div>
+
+    <script>
+        const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        function generateCalendar(year) {
+            const container = document.getElementById('calendarContainer');
+            container.innerHTML = '';
+
+            months.forEach((month, index) => {
+                const monthCard = document.createElement('div');
+                monthCard.className = `month-card ${month.toLowerCase().substr(0, 3)}`;
+                
+                const header = document.createElement('div');
+                header.className = 'month-header';
+                header.textContent = `${month} ${year}`;
+                
+                const table = document.createElement('table');
+                table.className = 'calendar-table';
+                
+                // Create table headers (Mon-Sun)
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].forEach(day => {
+                    const th = document.createElement('th');
+                    th.textContent = day;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Create calendar body
+                const tbody = document.createElement('tbody');
+                const date = new Date(year, index, 1);
+                const today = new Date();
+                
+                // Calculate days in month
+                const daysInMonth = new Date(year, index + 1, 0).getDate();
+                
+                // Calculate starting day (0 = Monday)
+                let day = (date.getDay() === 0 ? 6 : date.getDay() - 1);
+                
+                let weekRow = document.createElement('tr');
+                
+                // Add empty cells for days before first day
+                for(let i = 0; i < day; i++) {
+                    const td = document.createElement('td');
+                    weekRow.appendChild(td);
+                }
+
+                // Add days
+                for(let d = 1; d <= daysInMonth; d++) {
+                    const td = document.createElement('td');
+                    td.textContent = d;
+                    
+                    // Highlight today
+                    if(year === today.getFullYear() && 
+                       index === today.getMonth() && 
+                       d === today.getDate()) {
+                        td.classList.add('today');
+                    }
+                    
+                    weekRow.appendChild(td);
+                    
+                    if(++day > 6) {
+                        day = 0;
+                        tbody.appendChild(weekRow);
+                        weekRow = document.createElement('tr');
+                    }
+                }
+
+                // Add empty cells for remaining days
+                if(day !== 0) {
+                    for(let i = day; i < 7; i++) {
+                        weekRow.appendChild(document.createElement('td'));
+                    }
+                    tbody.appendChild(weekRow);
+                }
+
+                table.appendChild(tbody);
+                
+                monthCard.appendChild(header);
+                monthCard.appendChild(table);
+                container.appendChild(monthCard);
+            });
+        }
+
+        // Initial generation
+        generateCalendar(2023);
+
+        // Year change handler
+        document.getElementById('yearInput').addEventListener('change', (e) => {
+            generateCalendar(parseInt(e.target.value));
+        });
+    </script>
+</body>
+</html>

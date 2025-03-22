@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Chrome Browser Model</title>
+	<style>
+    	/* Reset default margin and padding */
+    	body, html {
+        	margin: 0;
+        	padding: 0;
+        	height: 100%;
+        	font-family: Arial, sans-serif;
+        	background-color: #f0f0f0;
+        	display: flex;
+        	flex-direction: column;
+        	align-items: center;
+        	justify-content: center;
+    	}
+
+    	/* Chrome browser top bar */
+    	.browser-bar {
+        	width: 100%;
+        	height: 40px;
+        	background-color: #202124;
+        	display: flex;
+        	align-items: center;
+        	padding: 0 10px;
+        	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        	position: fixed;
+        	top: 0;
+        	left: 0;
+    	}
+
+    	/* Browser buttons */
+    	.browser-buttons {
+        	display: flex;
+        	gap: 8px;
+    	}
+
+    	.browser-buttons span {
+        	width: 12px;
+        	height: 12px;
+        	border-radius: 50%;
+        	background-color: #ff5f56;
+        	cursor: pointer;
+    	}
+
+    	.browser-buttons span:nth-child(2) {
+        	background-color: #ffbd2e;
+    	}
+
+    	.browser-buttons span:nth-child(3) {
+        	background-color: #27c93f;
+    	}
+
+    	/* Google homepage style */
+    	.google-container {
+        	text-align: center;
+        	margin-top: 100px;
+    	}
+
+    	.google-logo {
+        	width: 272px;
+        	height: 92px;
+        	margin-bottom: 20px;
+    	}
+
+    	.search-bar {
+        	width: 500px;
+        	height: 40px;
+        	padding: 10px;
+        	border: 1px solid #dfe1e5;
+        	border-radius: 24px;
+        	box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28);
+        	font-size: 16px;
+        	outline: none;
+    	}
+
+    	.search-bar:focus {
+        	border-color: #4285f4;
+    	}
+
+    	.search-button {
+        	margin-top: 20px;
+        	padding: 10px 20px;
+        	font-size: 14px;
+        	background-color: #f8f9fa;
+        	border: 1px solid #f8f9fa;
+        	border-radius: 4px;
+        	cursor: pointer;
+    	}
+
+    	.search-button:hover {
+        	border: 1px solid #dadce0;
+        	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    	}
+	</style>
+</head>
+<body>
+
+	<!-- Chrome browser top bar -->
+	<div class="browser-bar">
+    	<div class="browser-buttons">
+        	<span></span>
+        	<span></span>
+        	<span></span>
+    	</div>
+	</div>
+
+	<!-- Google homepage content -->
+	<div class="google-container">
+    	<img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Google Logo" class="google-logo">
+    	<form action="https://www.google.com/search" method="GET" target="_blank">
+        	<input type="text" name="q" class="search-bar" placeholder="Search Google or type a URL">
+        	<br>
+        	<button type="submit" class="search-button">Google Search</button>
+    	</form>
+	</div>
+
+</body>
+</html>
